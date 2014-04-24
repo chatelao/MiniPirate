@@ -22,8 +22,11 @@
 #include <ctype.h>
 #include <Wire.h>
 #include <EEPROM.h>
+#include <Servo.h>
 #include "pins_arduino.h"
 #include "baseIO.h"
+
+Servo servo;
 
 #define I2C_LIST_SIZE 127
 
@@ -41,13 +44,26 @@ int getActiveAddress() {
 
 }
 
+void printStrDec(char* str, int dec_nbre) {
+  Serial.print(str);
+  Serial.print(dec_nbre);
+}
+
+void printStrHex(char* str, int hex_nbre) {
+  Serial.print(str);
+  bpWhex(hex_nbre);
+}
+
+void printStrBin(char* str, int bin_nbre) {
+  Serial.print(str);
+  bpWbin(bin_nbre);
+}
+
 void listI2C() {
   for(int i = 0; i < i2c_address_found; i++) {
     Serial.print(i);
-    Serial.print(": ");
-    bpWhex(i2c_address_list[i]);
-    Serial.print(" - ");
-    bpWbin(i2c_address_list[i]);
+    printStrHex(": ",  i2c_address_list[i]);
+    printStrBin(" - ", i2c_address_list[i]);
     Serial.println("");
   }
 }
@@ -75,8 +91,7 @@ void scanI2C() {
     }
     else if (error==4)
     {
-      Serial.print("Unknow error at address ");
-      bpWhex(address);
+      printStrHex("Unknow error at address ", address);
       Serial.println("");
     }
   }
@@ -96,18 +111,28 @@ void helpI2C() {
   Serial.println("LIST OF SUPPORTED COMMANDS");
   Serial.println("==========================");
   Serial.println("h - Show this help");
-
+  
+  //
+  // Arduino port manipulations
+  //
   Serial.println("p - Show current port values & directions");
-  Serial.println("/ - Set a port to HIGH (clock up)");
-  Serial.println("\\ - Set a port to LOW (clock down)");
-  Serial.println("^ - Set a port LOW-HIGH-LOW (one clock)");
 
   Serial.println("< - Set a port as INPUT");
   Serial.println("> - Set a port as OUTPUT");
 
+  Serial.println("/ - Set a port to HIGH (clock up)");
+  Serial.println("\\ - Set a port to LOW (clock down)");
+  Serial.println("^ - Set a port LOW-HIGH-LOW (one clock)");
+
   // Serial.println("b - Show bar graph of analog input");
   Serial.println("g - Set analog (pwm) value");
 
+  Serial.println("s - Set servo value");
+
+  //
+  // I2C communication
+  //
+  // tbd: Serial.println("mi - Scan i2c device addresses");
   Serial.println("i - Scan i2c device addresses");
   Serial.println("# - Set i2c device active x ");
   Serial.println("r # - Read i2c n bytes from active device");
@@ -116,9 +141,40 @@ void helpI2C() {
   //
   // tbd: add SPI communication
   //
-  // Serial.println("s - spi enabled");
-  // Serial.println("r # - i2c read n bytes from active device");
-  // Serial.println("w # # # - isc write bytes to active device");
+  // Serial.println("ms - spi enabled");
+  // Serial.println("r # - spi read n bytes from active device");
+  // Serial.println("w # # # - spi write bytes to active device");
+
+  //
+  // tbd: add LCD communication
+  //
+  // Serial.println("ml - LCD enabled");
+  // Serial.println("r # - LCD read n bytes from active device");
+  // Serial.println("w # # # - LCD write bytes to active device");
+
+  //
+  // tbd: add memory access
+  //
+  // Serial.println("mm - Memory access enabled");
+  // Serial.println("# - Set memory position to");
+  // Serial.println("r # - Read n bytes from memory");
+  // Serial.println("w # # # - Write bytes to memory");
+
+  //
+  // tbd: add EEPROM access
+  //
+  // Serial.println("me - EEPROM access enabled");
+  // Serial.println("# - Set EEPROM position to");
+  // Serial.println("r # - Read n bytes from EEPROM");
+  // Serial.println("w # # # - Write bytes to EEPROM");
+
+  //
+  // tbd: add FLASH access
+  //
+  // Serial.println("mf - Flash access enabled");
+  // Serial.println("# - Set flash position to");
+  // Serial.println("r # - Read n bytes from flash");
+  // Serial.println("w # # # - Write bytes to flash");
 
   //
   // Storing a config to recover after power-up
@@ -128,22 +184,24 @@ void helpI2C() {
   Serial.println("z - set all ports to input and low");
 }
 
-boolean isNumberPeek() {
+
+char pollPeek() {
   while(Serial.available() == false);
-  char p = Serial.peek();
+  return Serial.peek();
+}
+
+boolean isNumberPeek() {
+  char p = pollPeek();
   return p >= '0' && p <= '9';
 }
 
 boolean isBlankPeek() {
-  while(Serial.available() == false);
-  char p = Serial.peek();
+  char p = pollPeek();
   return p == ' ';
 }
 
 boolean isNumberOrBlankPeek() {
-
   return isNumberPeek() || isBlankPeek();
-
 }
 
 char pollSerial() {
@@ -171,16 +229,17 @@ void pollBlanks() {
 //
 int pollInt() {
 
+  pollBlanks();
   while(Serial.available() == 0);
   int value = 0;
-  if(Serial.peek() == '0') {
+  if(pollPeek() == '0') {
       pollSerial();
-      switch(tolower(Serial.peek())) {
+      switch(tolower(pollPeek())) {
         case 'x':
           pollSerial();
-          while(   (Serial.peek() >= '0' && Serial.peek() <= '9')
-                || (Serial.peek() >= 'a' && Serial.peek() <= 'f')
-                || (Serial.peek() >= 'A' && Serial.peek() <= 'F')) {
+          while(   (tolower(pollPeek()) >= '0' && tolower(pollPeek()) <= '9')
+                || (tolower(pollPeek()) >= 'a' && tolower(pollPeek()) <= 'f')
+               ) {
             value <<= 4;
             char c = pollLowSerial();
             if(c <= '9') {
@@ -191,15 +250,20 @@ int pollInt() {
           }
           return value;
           break;
+
         case 'b':
-          while(Serial.peek() == '0' || Serial.peek() == '1') {
+          pollSerial();
+          while(pollPeek() == '0' || pollPeek() == '1') {
             value <<= 1;
             value += (pollSerial() == '1' ? 1 : 0);
           }
           return value;
           break;
-        // default: would be octal, no clue if this is required yet.
-        // take care about a "pure" zero
+         // default: would be octal, no clue if this is required yet.
+         // take care about a "pure" zero
+
+        default:
+        break;
       }
   }
   if(isNumberPeek()) {
@@ -226,16 +290,55 @@ int pollPin() {
       case 'a':
         pin += A0;
       case 'd':
-        if(isNumberPeek()) {
-          return pin + pollInt();
+        if(!isNumberPeek()) {
+          return -1;
         }
     }
-  }
-  return -1;
+  } 
+  return pin + pollInt();
 }
 
 void printHighLow(int value) {
   Serial.print(value == true ? "HIGH" : "LOW");
+}
+
+void printPin(int pin) {
+  if(pin >= A0) {
+    Serial.print("A");    
+    pin -= A0;
+  } else {
+    Serial.print("D");    
+  }
+  Serial.print(pin);    
+}
+
+void printPorts() {
+       for(int i = 0; i < 14; i++) {
+         int value = digitalRead(i);
+
+         Serial.print("Value on pin D");
+         Serial.print(i);
+         if(i < 10) Serial.print(' ');
+         // http://garretlab.web.fc2.com/en/arduino/inside/arduino/Arduino.h/portModeRegister.html
+         int pin_mode = *portModeRegister(digitalPinToPort(i)) & digitalPinToBitMask(i);
+         Serial.print(( pin_mode == 0 ? " INPUT  " : " OUTPUT " ));
+         Serial.print(": ");
+         printHighLow(value);
+         Serial.println("");
+       }
+       for(int i = 0; i < 6; i++) {
+         int a_value = analogRead(i);
+         int value = digitalRead(A0+i);
+
+         printStrDec("Value on pin A", i);
+         if(i < 10) Serial.print(' ');
+         int pin_mode = *portModeRegister(digitalPinToPort(A0+i)) & digitalPinToBitMask(A0+i);
+         Serial.print(( pin_mode == 0 ? " INPUT  " : " OUTPUT " ));
+         Serial.print(": ");
+         printHighLow(value);
+         printStrDec(" / ", a_value);
+         Serial.println();
+       }
 }
 
 void setPin(int pin, int value) {
@@ -243,13 +346,8 @@ void setPin(int pin, int value) {
   pinMode(pin, OUTPUT);
   digitalWrite(pin, value);
   Serial.println("");
-  if(pin < A0) {
-    Serial.print("New value on pin D");
-  } else {
-    Serial.print("New value on pin A");
-    pin -= A0;
-  }
-  Serial.print(pin);
+  Serial.print("New value on pin ");
+  printPin(pin);
   if(pin < 10) Serial.print(' ');
   Serial.print(": ");
   printHighLow(value);
@@ -271,7 +369,6 @@ void setup()
 
   Serial.begin(9600);
   Serial.println("ArduPirate: v0.1");
-  Serial.println("");
 
   // Run initial scan
   Serial.println("");
@@ -284,10 +381,8 @@ void loop()
   Serial.println("");
   Serial.print("I2C");
   if(i2c_address_active >= 0) {
-    Serial.print("[");
-    Serial.print(i2c_address_active);
-    Serial.print(" - ");
-    bpWhex(getActiveAddress());
+    printStrDec("[",   i2c_address_active);
+    printStrHex(" - ", getActiveAddress());
     Serial.print("] ");
   }
   Serial.print("> ");
@@ -302,19 +397,39 @@ void loop()
 
     case 'g':
      {
+       int pin_nbre = pollPin();
        pollBlanks();
-       if(isNumberPeek()) {
-         int pin_nbre = pollInt();
-         pollBlanks();
-         if(isNumberPeek()) {
+       if(pin_nbre >= 0 && isNumberPeek()) {
            int value = pollInt();
            analogWrite(pin_nbre, value);
            Serial.println("");
-           Serial.print("New analog value on pin A");
-           Serial.print(pin_nbre);
-           Serial.println(": ");
-           Serial.print(value);
-         }
+           Serial.print("New analog value on pin ");
+           printPin(pin_nbre);
+           printStrDec(": ", value);
+           Serial.println();
+       }
+     }
+    break;
+
+    case 's':
+     {
+       int pin = pollPin();
+       pollBlanks();
+       if(pin >= 0 && isNumberPeek()) {
+           int value = pollInt();
+           
+           servo.attach(pin);
+           servo.write(value);
+           
+           Serial.println("");
+           Serial.print("New servo value on pin ");
+           printPin(pin);
+           printStrDec(": ", value);
+           Serial.println();
+           
+           // Keep the position until next input
+           pollPeek();
+           servo.attach(pin);
        }
      }
     break;
@@ -350,17 +465,13 @@ void loop()
 
     case '<':
      {
+      Serial.println();
       int pin = pollPin();
       if(pin >= 0) {
         pinMode(pin, INPUT);
         Serial.println();
-        if(pin < A0) {
-          Serial.print("Pin D");
-        } else {
-          Serial.print("Pin A");
-          pin -= A0;
-        }
-        Serial.print(pin);
+        Serial.print("Pin ");
+        printPin(pin);
         Serial.println(" is now INPUT");
        }
       }
@@ -368,58 +479,25 @@ void loop()
 
     case '>':
      {
+      Serial.println();
       int pin = pollPin();
       if(pin >= 0) {
         pinMode(pin, OUTPUT);
         Serial.println();
-        if(pin < A0) {
-          Serial.print("Pin D");
-        } else {
-          Serial.print("Pin A");
-          pin -= A0;
-        }
-        Serial.print(pin);
+        Serial.print("Pin ");
+        printPin(pin);
         Serial.println(" is now OUTPUT");
        }    
       }
      break;
     
     case 'p':
-     {
-       Serial.println("");
-       for(int i = 0; i < 14; i++) {
-         int value = digitalRead(i);
-
-         Serial.print("Value on pin D");
-         Serial.print(i);
-         if(i < 10) Serial.print(' ');
-         // http://garretlab.web.fc2.com/en/arduino/inside/arduino/Arduino.h/portModeRegister.html
-         int pin_mode = *portModeRegister(digitalPinToPort(i)) & digitalPinToBitMask(i);
-         Serial.print(( pin_mode == 0 ? " INPUT  " : " OUTPUT " ));
-         Serial.print(": ");
-         printHighLow(value);
-         Serial.println("");
-       }
-       for(int i = 0; i < 6; i++) {
-         int a_value = analogRead(i);
-         int value = digitalRead(A0+i);
-
-         Serial.print("Value on pin A");
-         Serial.print(i);
-         if(i < 10) Serial.print(' ');
-         int pin_mode = *portModeRegister(digitalPinToPort(A0+i)) & digitalPinToBitMask(A0+i);
-         Serial.print(( pin_mode == 0 ? " INPUT  " : " OUTPUT " ));
-         Serial.print(": ");
-         printHighLow(value);
-         Serial.print(" / ");
-         Serial.print(a_value);
-         Serial.println();
-       }
-     }
+       Serial.println();
+       printPorts();
     break;
 
     case 'i':
-       Serial.println("");
+       Serial.println();
        scanI2C();
     break;
 
@@ -487,11 +565,11 @@ void loop()
        Wire.endTransmission();
 
        Serial.println();
-       Serial.print("Wrote to ");
-       bpWhex(getActiveAddress());
-       Serial.print(", ");
+       Serial.print("Wrote ");
        Serial.print(count);
-       Serial.println(" bytes");
+       Serial.print(" bytes to ");
+       bpWhex(getActiveAddress());
+       Serial.println();
      }
     break;
     
@@ -527,6 +605,7 @@ void loop()
      }
      Serial.println();
      Serial.println("Loaded digital pins from EEPROM");
+     printPorts();
      break;
      
    case 'z':
