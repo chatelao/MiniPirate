@@ -17,6 +17,8 @@
 #ifndef baseIO_h
 #define baseIO_h
 
+#include <WProgram.h>
+#include <Arduino.h>
 /*
 //manage user terminal input
 unsigned int bpUserNumberPrompt(unsigned int maxBytes, unsigned int maxValue, unsigned int defValue);
@@ -145,5 +147,30 @@ unsigned int bpReadFlash(unsigned int page, unsigned int addr);
 // Read the full 24 bits from programming flash memory
 unsigned long int bpReadFlashFull(unsigned int page, unsigned int addr);
 */
+
+void printStrDec(char* str, int dec_nbre);
+void printStrHex(char* str, int hex_nbre);
+void printStrBin(char* str, int bin_nbre);
+
+
+char pollPeek();
+
+boolean isNumberPeek();
+boolean isBlankPeek();
+boolean isNumberOrBlankPeek();
+
+char pollSerial();
+char pollLowSerial();
+void pollBlanks();
+//
+// Parse BIN (0bXXX), HEX (0xXXX) and DEC (XXX)
+//
+int pollInt();
+int peekSerial();
+int pollPin();
+void printHighLow(int value);
+void printPin(int pin);
+void printPorts();
+
 #endif
 

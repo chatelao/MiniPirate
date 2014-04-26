@@ -13,8 +13,7 @@
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
-#include <WProgram.h>
-#include <Arduino.h>
+
 #include "baseIO.h"
 /*
 #include "base.h"
@@ -677,4 +676,179 @@ void __attribute__((interrupt, no_auto_psv)) _U1TXInterrupt(void) {
 }
 #endif
 */
+
+//
+// New functions from MiniPirate
+//
+
+void printStrDec(char* str, int dec_nbre) {
+  Serial.print(str);
+  Serial.print(dec_nbre);
+}
+
+void printStrHex(char* str, int hex_nbre) {
+  Serial.print(str);
+  bpWhex(hex_nbre);
+}
+
+void printStrBin(char* str, int bin_nbre) {
+  Serial.print(str);
+  bpWbin(bin_nbre);
+}
+
+char pollPeek() {
+  while(Serial.available() == false);
+  return Serial.peek();
+}
+
+boolean isNumberPeek() {
+  char p = pollPeek();
+  return p >= '0' && p <= '9';
+}
+
+boolean isBlankPeek() {
+  char p = pollPeek();
+  return p == ' ';
+}
+
+boolean isNumberOrBlankPeek() {
+  return isNumberPeek() || isBlankPeek();
+}
+
+char pollSerial() {
+
+  char c;
+  // send data only when you receive data:
+  while(Serial.available() == 0);
+  c = Serial.read();
+  Serial.print(c);
+  return c;
+}
+
+char pollLowSerial() {
+  return tolower(pollSerial());
+}
+
+void pollBlanks() {
+ while(isBlankPeek()) {
+   pollSerial();
+ }
+}
+
+//
+// Parse BIN (0bXXX), HEX (0xXXX) and DEC (XXX)
+//
+int pollInt() {
+
+  pollBlanks();
+  while(Serial.available() == 0);
+  int value = 0;
+  if(pollPeek() == '0') {
+      pollSerial();
+      switch(tolower(pollPeek())) {
+        case 'x':
+          pollSerial();
+          while(   (tolower(pollPeek()) >= '0' && tolower(pollPeek()) <= '9')
+                || (tolower(pollPeek()) >= 'a' && tolower(pollPeek()) <= 'f')
+               ) {
+            value <<= 4;
+            char c = pollLowSerial();
+            if(c <= '9') {
+              value += c - '0';
+            } else { // a-f
+              value += 10 + c - 'a';
+            }
+          }
+          return value;
+          break;
+
+        case 'b':
+          pollSerial();
+          while(pollPeek() == '0' || pollPeek() == '1') {
+            value <<= 1;
+            value += (pollSerial() == '1' ? 1 : 0);
+          }
+          return value;
+          break;
+         // default: would be octal, no clue if this is required yet.
+         // take care about a "pure" zero
+
+        default:
+        break;
+      }
+  }
+  if(isNumberPeek()) {
+    value = Serial.parseInt();
+    Serial.print(value);
+  }
+  return value;
+}
+
+int peekSerial() {
+
+  // Peek data only when you receive data:
+  while(Serial.available() == 0);
+  return Serial.peek();
+}
+
+int pollPin() {
+
+  pollBlanks();
+  int pin = 0;
+  if(!isNumberPeek()) {
+    char c   = pollLowSerial();
+    switch(c) {
+      case 'a':
+        pin += A0;
+      case 'd':
+        if(!isNumberPeek()) {
+          return -1;
+        }
+    }
+  } 
+  return pin + pollInt();
+}
+
+void printHighLow(int value) {
+  Serial.print(value == true ? "HIGH" : "LOW");
+}
+
+void printPin(int pin) {
+  if(pin >= A0) {
+    Serial.print("A");    
+    pin -= A0;
+  } else {
+    Serial.print("D");    
+  }
+  Serial.print(pin);    
+}
+
+void printPorts() {
+       for(int i = 0; i < 14; i++) {
+         int value = digitalRead(i);
+
+         Serial.print("Value on pin D");
+         Serial.print(i);
+         if(i < 10) Serial.print(' ');
+         // http://garretlab.web.fc2.com/en/arduino/inside/arduino/Arduino.h/portModeRegister.html
+         int pin_mode = *portModeRegister(digitalPinToPort(i)) & digitalPinToBitMask(i);
+         Serial.print(( pin_mode == 0 ? " INPUT  " : " OUTPUT " ));
+         Serial.print(": ");
+         printHighLow(value);
+         Serial.println("");
+       }
+       for(int i = 0; i < 6; i++) {
+         int a_value = analogRead(i);
+         int value = digitalRead(A0+i);
+
+         printStrDec("Value on pin A", i);
+         if(i < 10) Serial.print(' ');
+         int pin_mode = *portModeRegister(digitalPinToPort(A0+i)) & digitalPinToBitMask(A0+i);
+         Serial.print(( pin_mode == 0 ? " INPUT  " : " OUTPUT " ));
+         Serial.print(": ");
+         printHighLow(value);
+         printStrDec(" / ", a_value);
+         Serial.println();
+       }
+}
 
