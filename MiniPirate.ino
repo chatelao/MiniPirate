@@ -28,6 +28,11 @@
 #include "modeBase.h"
 #include "modeI2C.h"
 
+long readAVR_VCC (long voltage_reference = 1125300);
+long readAVRInternalTemp();
+int freeRam();
+float VCC;
+
 Servo     servo;
 ModeI2C   modeI2C;
 
@@ -49,12 +54,13 @@ void mpHelp() {
 
   Serial.println("LIST OF SUPPORTED COMMANDS");
   Serial.println("==========================");
-  Serial.println("h - Show this help");
+  Serial.println("h/? - Show this help");
   
   //
   // Arduino port manipulations
   //
   Serial.println("p - Show all port values & directions");
+  Serial.println("q - Show all port values & directions (quick)");
 
   Serial.println(". - Show port value & direction");
   Serial.println("< - Set a port as INPUT");
@@ -77,6 +83,7 @@ void mpHelp() {
   Serial.println("# - Set i2c device active x ");
   Serial.println("r # - Read i2c n bytes from active device");
   Serial.println("w # # # - Write i2c bytes to active device");
+
 
   //
   // tbd: add SPI communication
@@ -124,6 +131,14 @@ void mpHelp() {
   Serial.println("x - save current config to eeprom");
   Serial.println("y - load last config from eeprom");
   Serial.println("z - set all ports to input and low");
+
+  Serial.println("v - Show AVR VCC reading");
+  Serial.println("t - Show AVR internal temperature reading");
+  Serial.println("f - Show free memory");
+  Serial.println("u - Show system uptime (or clock)");
+  Serial.println("e - Erase EEPROM");
+  Serial.println("* - Reboot");
+
 }
 
 void setPin(int pin, int value) {
@@ -148,10 +163,13 @@ void setup()
   modeI2C.setup();
 
   Serial.begin(9600);
-  Serial.println("ArduPirate: v0.1");
+  Serial.println("ArduPirate: v0.11");
 
   // Run initial scan
   Serial.println("");
+  VCC = readAVR_VCC()/1000.0f;
+  if (VCC < 0.0f) VCC = 5.0f;
+
   mpHelp();
 }
 
@@ -174,12 +192,77 @@ void loop()
   c = pollLowSerial();
 
   switch (c) {
+    case '?':
     case 'h':
        Serial.println("");
        mpHelp();
     break;
+	case '*':
+		{
+			Serial.println("");
+			Serial.println("Rebooting...");
+			Serial.println("");
+			delay(1000);
+			void(* resetFunc) (void) = 0; //declare reset function @ address 0
+			resetFunc();
+		}
+		break;
+	case 'u':
+		{
+			Serial.println("");
+			unsigned long now = millis();
+			Serial.print (now/1000.0f);
+			Serial.println (" seconds");
+		}
+		break;
+	case 't':
+		{
+		Serial.println("");
+		int t = readAVRInternalTemp();
+		if (t < 0) 	{
+			Serial.println ("Not supported on this chip");
+			}
+		else {
+			Serial.print (t/1000.0f);
+			Serial.println ("'C");
+			}
+		}
+		break;	
+	case 'v':
+		{
+		Serial.println("");
+		VCC = readAVR_VCC()/1000.0;
+		if (VCC < 0.0f) 	{
+			Serial.println ("Not supported on this chip");
+			VCC=5.0f;
+			}
+		else {
+			Serial.print (VCC);
+			Serial.println (" Volts");
+			}
+		}
+		break;	
+	case 'f':
+		Serial.println("");
+		Serial.print (freeRam());
+		Serial.println (" bytes free");
+		
+		Serial.print ("EEPROM is ");
+		Serial.print (E2END);
+		Serial.println (" bytes");
+		break;    
+	case 'e':
 
-    case 'm':
+		Serial.println("");
+		Serial.print ("Erasing ");
+		Serial.print (E2END);
+		Serial.println (" bytes....this may take a minute...");
+		for (int i=0;i<E2END;i++)
+			EEPROM.write(i,0);
+		Serial.println("done");
+
+		break;   
+	case 'm':
      {
       char d = pollLowSerial();
       Serial.println("");
@@ -218,14 +301,23 @@ void loop()
        int pin_nbre = pollPin();
        pollBlanks();
        if(pin_nbre >= 0 && isNumberPeek()) {
-           int value = pollInt();
-           analogWrite(pin_nbre, value);
-           Serial.println("");
-           Serial.print("New analog value on pin ");
-           printPin(pin_nbre);
-           printStrDec(": ", value);
-           Serial.println();
-       }
+		   if (digitalPinHasPWM(pin_nbre))  {
+			   int value = pollInt();
+				analogWrite(pin_nbre, value);
+				Serial.println("");
+				Serial.print("New analog value on pin ");
+				printPin(pin_nbre);
+				printStrDec(": ", value);
+				Serial.println();
+			   }
+		   else {
+			   Serial.println("");
+			   Serial.print("Pin ");
+			   printPin(pin_nbre);
+			   Serial.print(" does not support PWM output");
+			   Serial.println();
+				}
+		   }
      }
     break;
 
@@ -313,6 +405,10 @@ void loop()
        Serial.println();
        printPorts();
     break;
+	case 'q':
+		Serial.println();
+		printPortsQuick();
+		break;
 
     case 'i':
        Serial.println();
@@ -342,11 +438,13 @@ void loop()
        // Write all directions to EEPROM
        // Write all digital values to EEPROM
        // Write all pwm values to EEPROM
-       for(int i = 0; i <= A7; i++) {
+       for(int i = 0; i < NUM_ANALOG_INPUTS+A0; i++) {
          int pin_mode  = *portModeRegister(digitalPinToPort(i)) & digitalPinToBitMask(i);// != 0;
          int pin_value = digitalRead(i);
-         EEPROM.write(2*i,   pin_mode);
-         EEPROM.write(2*i+1, pin_value);
+		 if (2*i+1 < E2END) { 
+			 EEPROM.write(2*i,   pin_mode);
+			 EEPROM.write(2*i+1, pin_value);
+			 }
        }
      }
      Serial.println();
@@ -358,13 +456,15 @@ void loop()
        // Read all directions to EEPROM
        // Read all digital values to EEPROM
        // Read all pwm values to EEPROM
-       for(int i = 0; i <= A7; i++) {
-         int pin_mode  = EEPROM.read(2*i);
-         int pin_value = EEPROM.read(2*i + 1);
-         pinMode(i, pin_mode);
-         //if(pin_mode != 0) {
-           digitalWrite(i, pin_value);
-         //}
+       for(int i = 0; i < NUM_ANALOG_INPUTS+A0; i++) {
+		   if (2*i+1 < E2END) { 
+			   int pin_mode  = EEPROM.read(2*i);
+			   int pin_value = EEPROM.read(2*i + 1);
+			   pinMode(i, pin_mode);
+			   //if(pin_mode != 0) {
+			   digitalWrite(i, pin_value);
+			   //}
+			   }
        }
      }
      Serial.println();
@@ -375,7 +475,7 @@ void loop()
    case 'z':
      Serial.println();
      Serial.print("Reset ...");
-     for(int i = 0; i <= A7; i++) {
+     for(int i = 0; i < NUM_ANALOG_INPUTS+A0; i++) {
        pinMode(i, INPUT);
        digitalWrite(i, LOW);
      }
@@ -383,3 +483,53 @@ void loop()
   }
 }
 
+long readAVR_VCC(long voltage_reference)
+	{
+	// Read 1.1V reference against AVcc
+	// set the reference to Vcc and the measurement to the internal 1.1V reference
+#if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+	ADMUX = _BV(REFS0) | _BV(MUX4) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
+#elif defined (__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__)
+	ADMUX = _BV(MUX5) | _BV(MUX0);
+#elif defined (__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
+	ADMUX = _BV(MUX3) | _BV(MUX2);
+#else
+	ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
+#endif
+
+	delay(2); // Wait for Vref to settle
+	ADCSRA |= _BV(ADSC); // Start conversion
+	while (bit_is_set(ADCSRA,ADSC)); // measuring
+
+	uint8_t low  = ADCL; // must read ADCL first - it then locks ADCH
+	uint8_t high = ADCH; // unlocks both
+
+	long result = (high<<8) | low;
+
+	result = voltage_reference / result; // Calculate Vcc (in mV); 1125300 = 1.1*1023*1000
+	return result; // Vcc in millivolts
+	}
+
+
+long readAVRInternalTemp()
+	{
+#if defined(__AVR_ATmega2560__) || defined(__AVR_ATmega1280__)
+	return -1;
+#endif
+	long result; // Read temperature sensor against 1.1V reference
+	ADMUX = _BV(REFS1) | _BV(REFS0) | _BV(MUX3);
+	delay(20); // Wait for Vref to settle - 2 was inadequate
+	ADCSRA |= _BV(ADSC); // Convert
+	while (bit_is_set(ADCSRA,ADSC));
+	result = ADCL;
+	result |= ADCH<<8;
+	result = (result - 125) * 1075;
+	return result;
+	}
+
+int freeRam()
+	{
+	extern int __heap_start, *__brkval;
+	int v;
+	return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
+	}
