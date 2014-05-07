@@ -240,6 +240,8 @@ void bpWvolts(const unsigned int adc) {
     // fit in an unsigned int. The error is less than 1mV.
     const unsigned int centivolt = (adc * 29) / 45;
 
+
+
     bpWdec(centivolt / 100);
 
     UART1TX('.');
@@ -681,8 +683,9 @@ void __attribute__((interrupt, no_auto_psv)) _U1TXInterrupt(void) {
 // New functions from MiniPirate
 //
 
-void printStrDec(char* str, int dec_nbre) {
+void printStrDec(char* str, int dec_nbre, int pad_digits) {
   Serial.print(str);
+  while (pad_digits>0 && dec_nbre < pow(10,pad_digits--)) Serial.print('0');
   Serial.print(dec_nbre);
 }
 
@@ -810,7 +813,7 @@ int pollPin() {
 }
 
 void printHighLow(int value) {
-  Serial.print(value == true ? "HIGH" : "LOW");
+  Serial.print(value == true ? "HIGH" : "LOW ");
 }
 
 void printPin(int pin) {
@@ -835,6 +838,11 @@ void printPorts() {
          Serial.print(( pin_mode == 0 ? " INPUT  " : " OUTPUT " ));
          Serial.print(": ");
          printHighLow(value);
+		 if (digitalPinHasPWM(i)) Serial.print(" PWM");
+		 if (digitalPinToInterrupt(i)>-1){
+			 Serial.print(" IRQ_");
+			 Serial.print(digitalPinToInterrupt(i));
+			 }
          Serial.println("");
        }
        for(int i = 0; i < NUM_ANALOG_INPUTS; i++) {
@@ -847,8 +855,55 @@ void printPorts() {
          Serial.print(( pin_mode == 0 ? " INPUT  " : " OUTPUT " ));
          Serial.print(": ");
          printHighLow(value);
-         printStrDec(" / ", a_value);
+         printStrDec(" / ", a_value,3);
+		 Serial.print(" / ");
+		 extern float VCC;
+		 Serial.print(a_value / 1023.0f * VCC);
+		 Serial.print("V");
+     //    printStrDec(" / ", a_value);
          Serial.println();
        }
 }
+
+// Prints all port direction and values in a matrix (concise) format
+// Digital values are 8 across and analog are 4 across
+void printPortsQuick() {
+	for(int i = 0; i < A0; i++) {
+		int value = digitalRead(i);
+		if (i%8==0) {
+			Serial.print("D");
+			Serial.print(i);
+			Serial.print(": ");
+			if(i < 10) Serial.print(' ');
+			}
+		int pin_mode = *portModeRegister(digitalPinToPort(i)) & digitalPinToBitMask(i);
+		Serial.print(( pin_mode == 0 ? " <" : " >" ));
+		Serial.print(value?"1 ":"0 ");
+		if (i%8==7) Serial.println("");
+		}
+	Serial.println("");
+	for(int i = 0; i < NUM_ANALOG_INPUTS; i++) {
+		int a_value = analogRead(i);
+		int value = digitalRead(A0+i);
+		if (i%4==0) {
+			Serial.print("A");
+			Serial.print(i);
+			Serial.print(": ");
+			if(i < 10) Serial.print(' ');
+			}
+		
+		int pin_mode = *portModeRegister(digitalPinToPort(A0+i)) & digitalPinToBitMask(A0+i);
+		Serial.print(( pin_mode == 0 ? " <" : " >" ));
+		Serial.print(value?"1":"0");
+		printStrDec("(",a_value,3);
+/*
+		if (a_value<1000) Serial.print('0');
+		if (a_value<100) Serial.print('0');
+		if (a_value<10) Serial.print('0');
+		Serial.print(a_value);
+*/
+		Serial.print(")");
+		if (i%4==3) Serial.println("");
+		}
+	}
 

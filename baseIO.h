@@ -148,7 +148,7 @@ unsigned int bpReadFlash(unsigned int page, unsigned int addr);
 unsigned long int bpReadFlashFull(unsigned int page, unsigned int addr);
 */
 
-void printStrDec(char* str, int dec_nbre);
+void printStrDec(char* str, int dec_nbre,int pad_digits=0);
 void printStrHex(char* str, int hex_nbre);
 void printStrBin(char* str, int bin_nbre);
 
@@ -171,6 +171,6 @@ int pollPin();
 void printHighLow(int value);
 void printPin(int pin);
 void printPorts();
-
+void printPortsQuick();
 #endif
 
