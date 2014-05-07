@@ -137,6 +137,7 @@ void mpHelp() {
   Serial.println("f - Show free memory");
   Serial.println("u - Show system uptime (or clock)");
   Serial.println("e - Erase EEPROM");
+  Serial.println("* - Reboot");
 
 }
 
@@ -196,6 +197,16 @@ void loop()
        Serial.println("");
        mpHelp();
     break;
+	case '*':
+		{
+			Serial.println("");
+			Serial.println("Rebooting...");
+			Serial.println("");
+			delay(1000);
+			void(* resetFunc) (void) = 0; //declare reset function @ address 0
+			resetFunc();
+		}
+		break;
 	case 'u':
 		{
 			Serial.println("");
@@ -427,11 +438,13 @@ void loop()
        // Write all directions to EEPROM
        // Write all digital values to EEPROM
        // Write all pwm values to EEPROM
-       for(int i = 0; i <= NUM_ANALOG_INPUTS+NUM_DIGITAL_PINS; i++) {
+       for(int i = 0; i < NUM_ANALOG_INPUTS+A0; i++) {
          int pin_mode  = *portModeRegister(digitalPinToPort(i)) & digitalPinToBitMask(i);// != 0;
          int pin_value = digitalRead(i);
-         EEPROM.write(2*i,   pin_mode);
-         EEPROM.write(2*i+1, pin_value);
+		 if (2*i+1 < E2END) { 
+			 EEPROM.write(2*i,   pin_mode);
+			 EEPROM.write(2*i+1, pin_value);
+			 }
        }
      }
      Serial.println();
@@ -443,13 +456,15 @@ void loop()
        // Read all directions to EEPROM
        // Read all digital values to EEPROM
        // Read all pwm values to EEPROM
-       for(int i = 0; i <= NUM_ANALOG_INPUTS+NUM_DIGITAL_PINS; i++) {
-         int pin_mode  = EEPROM.read(2*i);
-         int pin_value = EEPROM.read(2*i + 1);
-         pinMode(i, pin_mode);
-         //if(pin_mode != 0) {
-           digitalWrite(i, pin_value);
-         //}
+       for(int i = 0; i < NUM_ANALOG_INPUTS+A0; i++) {
+		   if (2*i+1 < E2END) { 
+			   int pin_mode  = EEPROM.read(2*i);
+			   int pin_value = EEPROM.read(2*i + 1);
+			   pinMode(i, pin_mode);
+			   //if(pin_mode != 0) {
+			   digitalWrite(i, pin_value);
+			   //}
+			   }
        }
      }
      Serial.println();
@@ -460,7 +475,7 @@ void loop()
    case 'z':
      Serial.println();
      Serial.print("Reset ...");
-     for(int i = 0; i <= NUM_ANALOG_INPUTS+NUM_DIGITAL_PINS; i++) {
+     for(int i = 0; i < NUM_ANALOG_INPUTS+A0; i++) {
        pinMode(i, INPUT);
        digitalWrite(i, LOW);
      }
