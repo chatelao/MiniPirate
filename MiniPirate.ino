@@ -148,7 +148,7 @@ void setup()
   modeI2C.setup();
 
   Serial.begin(9600);
-  Serial.println("ArduPirate: v0.1");
+  Serial.println("ArduPirate: v0.11");
 
   // Run initial scan
   Serial.println("");
@@ -218,14 +218,23 @@ void loop()
        int pin_nbre = pollPin();
        pollBlanks();
        if(pin_nbre >= 0 && isNumberPeek()) {
-           int value = pollInt();
-           analogWrite(pin_nbre, value);
-           Serial.println("");
-           Serial.print("New analog value on pin ");
-           printPin(pin_nbre);
-           printStrDec(": ", value);
-           Serial.println();
-       }
+		   if (digitalPinHasPWM(pin_nbre))  {
+			   int value = pollInt();
+				analogWrite(pin_nbre, value);
+				Serial.println("");
+				Serial.print("New analog value on pin ");
+				printPin(pin_nbre);
+				printStrDec(": ", value);
+				Serial.println();
+			   }
+		   else {
+			   Serial.println("");
+			   Serial.print("Pin ");
+			   printPin(pin_nbre);
+			   Serial.print(" does not support PWM output");
+			   Serial.println();
+				}
+		   }
      }
     break;
 

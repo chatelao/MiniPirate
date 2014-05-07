@@ -824,7 +824,7 @@ void printPin(int pin) {
 }
 
 void printPorts() {
-       for(int i = 0; i < 14; i++) {
+       for(int i = 0; i < A0; i++) {
          int value = digitalRead(i);
 
          Serial.print("Value on pin D");
@@ -837,7 +837,7 @@ void printPorts() {
          printHighLow(value);
          Serial.println("");
        }
-       for(int i = 0; i < 6; i++) {
+       for(int i = 0; i < NUM_ANALOG_INPUTS; i++) {
          int a_value = analogRead(i);
          int value = digitalRead(A0+i);
 
