@@ -27,12 +27,23 @@
 #include "baseIO.h"
 #include "modeBase.h"
 #include "modeI2C.h"
+#include "Strings_PGM_MEM.h"
+
+//-----------------------------------------------------------------------------------------------------------------
+
+#define BAUD_RATE 9600
+
+#define ALLPINS (NUM_ANALOG_INPUTS+A0)
+
+int clock_table[ALLPINS];
 
 long readAVR_VCC (long voltage_reference = 1125300);
 long readAVRInternalTemp();
 int freeRam();
-float VCC;
+bool checkPinIsOutputMode( int pin_nbre );
 
+
+float VCC;
 Servo     servo;
 ModeI2C   modeI2C;
 
@@ -52,37 +63,39 @@ char* printMode () {
 
 void mpHelp() {
 
-  Serial.println("LIST OF SUPPORTED COMMANDS");
-  Serial.println("==========================");
-  Serial.println("h/? - Show this help");
+  SERIAL_PRINTLN_PGM("LIST OF SUPPORTED COMMANDS");
+  SERIAL_PRINTLN_PGM("==========================");
+  SERIAL_PRINTLN_PGM("h/? - Show this help");
   
   //
   // Arduino port manipulations
   //
-  Serial.println("p - Show all port values & directions");
-  Serial.println("q - Show all port values & directions (quick)");
+  SERIAL_PRINTLN_PGM("p - Show all port values & directions");
+  SERIAL_PRINTLN_PGM("q - Show all port values & directions (quick)");
 
-  Serial.println(". - Show port value & direction");
-  Serial.println("< - Set a port as INPUT");
-  Serial.println("> - Set a port as OUTPUT");
+  SERIAL_PRINTLN_PGM(". - Show port value & direction");
+  SERIAL_PRINTLN_PGM("< - Set a port as INPUT");
+  SERIAL_PRINTLN_PGM("> - Set a port as OUTPUT");
 
-  Serial.println("/ - Set a port to HIGH (clock up)");
-  Serial.println("\\ - Set a port to LOW (clock down)");
-  Serial.println("^ - Set a port LOW-HIGH-LOW (one clock)");
+  SERIAL_PRINTLN_PGM("/ - Set a port to HIGH (clock up)");
+  SERIAL_PRINTLN_PGM("\\ - Set a port to LOW (clock down)");
+  SERIAL_PRINTLN_PGM("^ - Set a port LOW-HIGH-LOW (one clock)");
+  SERIAL_PRINTLN_PGM("$ - Do a pin sweep");
+  SERIAL_PRINTLN_PGM("c - Set port to clock high and low with given delay");
 
   // Serial.println("b - Show bar graph of analog input");
-  Serial.println("g - Set analog (pwm) value");
+  SERIAL_PRINTLN_PGM("g - Set analog (pwm) value");
 
-  Serial.println("s - Set servo value");
+ SERIAL_PRINTLN_PGM("s - Set servo value");
 
   //
   // I2C communication
   //
   // tbd: Serial.println("mi - Scan i2c device addresses");
-  Serial.println("i - Scan i2c device addresses");
-  Serial.println("# - Set i2c device active x ");
-  Serial.println("r # - Read i2c n bytes from active device");
-  Serial.println("w # # # - Write i2c bytes to active device");
+  SERIAL_PRINTLN_PGM("i - Scan i2c device addresses");
+  SERIAL_PRINTLN_PGM("# - Set i2c device active x ");
+  SERIAL_PRINTLN_PGM("r # - Read i2c n bytes from active device");
+  SERIAL_PRINTLN_PGM("w # # # - Write i2c bytes to active device");
 
 
   //
@@ -128,16 +141,16 @@ void mpHelp() {
   //
   // Storing a config to recover after power-up
   //
-  Serial.println("x - save current config to eeprom");
-  Serial.println("y - load last config from eeprom");
-  Serial.println("z - set all ports to input and low");
+ SERIAL_PRINTLN_PGM("x - save current config to eeprom");
+  SERIAL_PRINTLN_PGM("y - load last config from eeprom");
+  SERIAL_PRINTLN_PGM("z - set all ports to input and low");
 
-  Serial.println("v - Show AVR VCC reading");
-  Serial.println("t - Show AVR internal temperature reading");
-  Serial.println("f - Show free memory");
-  Serial.println("u - Show system uptime (or clock)");
-  Serial.println("e - Erase EEPROM");
-  Serial.println("* - Reboot");
+  SERIAL_PRINTLN_PGM("v - Show AVR VCC reading");
+  SERIAL_PRINTLN_PGM("t - Show AVR internal temperature reading");
+  SERIAL_PRINTLN_PGM("f - Show free memory");
+  SERIAL_PRINTLN_PGM("u - Show system uptime (or clock)");
+  SERIAL_PRINTLN_PGM("e - Erase EEPROM");
+  SERIAL_PRINTLN_PGM("* - Reboot");
 
 }
 
@@ -145,14 +158,16 @@ void setPin(int pin, int value) {
 
   pinMode(pin, OUTPUT);
   digitalWrite(pin, value);
-  Serial.println("");
-  Serial.print("New value on pin ");
+  Serial.println();
+  SERIAL_PRINT_PGM("New value on pin ");
   printPin(pin);
-  if(pin < 10) Serial.print(' ');
-  Serial.print(": ");
+  if(pin < 10) Serial.print (' ');
+  SERIAL_PRINT_PGM(": ");
   printHighLow(value);
-  Serial.println("");
+  Serial.println();
 }
+//-----------------------------------------------------------------------------------------------------------------
+void clearClockTable();
 
 void setup()
 {
@@ -162,23 +177,36 @@ void setup()
 
   modeI2C.setup();
 
-  Serial.begin(9600);
-  Serial.println("ArduPirate: v0.11");
+  Serial.begin(BAUD_RATE);
+  SERIAL_PRINTLN_PGM("ArduPirate: v0.12 ( " __TIMESTAMP__ " ) ");
+  SERIAL_PRINT_PGM("Device has ");
+  Serial.print (NUM_DIGITAL_PINS - NUM_ANALOG_INPUTS); 
+  SERIAL_PRINT_PGM(" digital pins and ");
+  Serial.print (NUM_ANALOG_INPUTS); 
+  SERIAL_PRINTLN_PGM(" analog pins.");
+  SERIAL_PRINT_PGM("CPU is set to ");
+  Serial.print ((float) F_CPU / 1000000.0); 
+  SERIAL_PRINTLN_PGM("Mhz");
 
-  // Run initial scan
-  Serial.println("");
+// Run initial scan
+  Serial.println();
   VCC = readAVR_VCC()/1000.0f;
   if (VCC < 0.0f) VCC = 5.0f;
+  clearClockTable();
 
   mpHelp();
 }
+//-----------------------------------------------------------------------------------------------------------------
+
+const int RECORD_SIZE=4;
+
 
 void loop()
 {
   char c;
-  Serial.println("");
+  Serial.println();
   Serial.print(printMode());
-  Serial.print(mpMode);
+//   Serial.print(mpMode);
 /*  
   Serial.print("I2C");
   if(i2c_address_active >= 0) {
@@ -187,21 +215,29 @@ void loop()
     Serial.print("] ");
   }
 */  
-  Serial.print("> ");
+  SERIAL_PRINT_PGM("> ");
   Serial.flush();
+  c = -1;
+  while (!Serial.available()) 
+	  {
+	  unsigned long now = millis();
+	  for (int a=0;a<NUM_DIGITAL_PINS;a++)
+		  if (clock_table[a]>0) 
+			  digitalWrite(a,(now / clock_table[a]) & 1);
+	  }
   c = pollLowSerial();
 
   switch (c) {
     case '?':
     case 'h':
-       Serial.println("");
+       Serial.println();
        mpHelp();
     break;
 	case '*':
 		{
-			Serial.println("");
-			Serial.println("Rebooting...");
-			Serial.println("");
+			Serial.println();
+			SERIAL_PRINTLN_PGM("Rebooting...");
+			Serial.println();
 			delay(1000);
 			void(* resetFunc) (void) = 0; //declare reset function @ address 0
 			resetFunc();
@@ -209,63 +245,63 @@ void loop()
 		break;
 	case 'u':
 		{
-			Serial.println("");
+			Serial.println();
 			unsigned long now = millis();
 			Serial.print (now/1000.0f);
-			Serial.println (" seconds");
+			SERIAL_PRINTLN_PGM(" seconds");
 		}
 		break;
 	case 't':
 		{
-		Serial.println("");
+		Serial.println();
 		int t = readAVRInternalTemp();
 		if (t < 0) 	{
-			Serial.println ("Not supported on this chip");
+			SERIAL_PRINTLN_PGM("Not supported on this chip");
 			}
 		else {
 			Serial.print (t/1000.0f);
-			Serial.println ("'C");
+			SERIAL_PRINTLN_PGM("'C");
 			}
 		}
 		break;	
 	case 'v':
 		{
-		Serial.println("");
+		Serial.println();
 		VCC = readAVR_VCC()/1000.0;
 		if (VCC < 0.0f) 	{
-			Serial.println ("Not supported on this chip");
+			SERIAL_PRINTLN_PGM("Not supported on this chip");
 			VCC=5.0f;
 			}
 		else {
 			Serial.print (VCC);
-			Serial.println (" Volts");
+			SERIAL_PRINTLN_PGM(" Volts");
 			}
 		}
 		break;	
 	case 'f':
-		Serial.println("");
+		Serial.println();
 		Serial.print (freeRam());
-		Serial.println (" bytes free");
+		SERIAL_PRINTLN_PGM(" bytes free");
 		
-		Serial.print ("EEPROM is ");
+		SERIAL_PRINT_PGM("EEPROM is ");
 		Serial.print (E2END);
-		Serial.println (" bytes");
+		SERIAL_PRINTLN_PGM(" bytes");
 		break;    
 	case 'e':
 
-		Serial.println("");
-		Serial.print ("Erasing ");
+		Serial.println();
+		SERIAL_PRINT_PGM("Erasing ");
 		Serial.print (E2END);
-		Serial.println (" bytes....this may take a minute...");
+		SERIAL_PRINTLN_PGM(" bytes....this may take a minute...");
 		for (int i=0;i<E2END;i++)
 			EEPROM.write(i,0);
-		Serial.println("done");
+		SERIAL_PRINTLN_PGM("done");
 
 		break;   
 	case 'm':
      {
       char d = pollLowSerial();
-      Serial.println("");
+      Serial.println();
       switch (d) {
         
         case 'i':
@@ -300,26 +336,88 @@ void loop()
      {
        int pin_nbre = pollPin();
        pollBlanks();
+	   checkPinIsOutputMode(pin_nbre);
+	   
        if(pin_nbre >= 0 && isNumberPeek()) {
+		   clock_table[pin_nbre] = 0;
 		   if (digitalPinHasPWM(pin_nbre))  {
 			   int value = pollInt();
 				analogWrite(pin_nbre, value);
-				Serial.println("");
-				Serial.print("New analog value on pin ");
+				Serial.println();
+				SERIAL_PRINT_PGM("New analog value on pin ");
 				printPin(pin_nbre);
 				printStrDec(": ", value);
 				Serial.println();
 			   }
 		   else {
-			   Serial.println("");
-			   Serial.print("Pin ");
+			   Serial.println();
+			   SERIAL_PRINT_PGM("Pin ");
 			   printPin(pin_nbre);
-			   Serial.print(" does not support PWM output");
+			   SERIAL_PRINT_PGM(" does not support PWM output");
 			   Serial.println();
 				}
 		   }
      }
     break;
+
+	// sweep through all outputs, pulsing them high briefly (250ms), then back to previous state
+	case '$':
+// 			for(int i = 0; i < NUM_DIGITAL_PINS+A0; i++) {
+// 				digitalWrite(i, LOW);
+// 			}
+		 Serial.println();
+			SERIAL_PRINTLN_PGM("Starting sweep of all pins in sequence:");
+			SERIAL_PRINTLN_PGM("Each pin will be briefly set to output, flipped state, and then restored");
+			SERIAL_PRINTLN_PGM("Clocks are stopped. ");x
+			for (int a=0;a<NUM_DIGITAL_PINS;a++)
+				{
+				int original_pin_mode = getPinMode(a);
+				pinMode (a,OUTPUT);
+				digitalWrite (a,!digitalRead(a));
+				SERIAL_PRINT_PGM(" ");
+				printPin(a);	
+				
+				delay (250);
+				digitalWrite (a,!digitalRead(a));
+				pinMode (a,original_pin_mode?OUTPUT:INPUT);
+				if (a % 8 ==7) Serial.println();
+				}
+			break;
+	case 'c':
+		{
+		int pin_nbre = pollPin();
+		pollBlanks();
+		checkPinIsOutputMode(pin_nbre);
+
+		if(pin_nbre >= 0)	{
+			if (isNumberPeek()) {
+				clock_table[pin_nbre] =pollInt(); 
+				Serial.println();
+				SERIAL_PRINT_PGM("Clocking pin ");
+				printPin(pin_nbre);
+				SERIAL_PRINT_PGM(" with delay of ");
+				printStrDec("",clock_table[pin_nbre]);
+				SERIAL_PRINTLN_PGM("ms");
+				}
+			else {
+				clock_table[pin_nbre] =0; 
+				Serial.println();
+				SERIAL_PRINT_PGM("Stopping clock on pin ");
+				printPin(pin_nbre);
+				Serial.println();
+				}
+			}		
+			SERIAL_PRINTLN_PGM("Clocking pins: ");
+			for (int a=0;a<NUM_DIGITAL_PINS;a++)
+				if (clock_table[a] > 0) 
+				{
+					printPin(a);
+					SERIAL_PRINT_PGM(" delay = ");
+					printStrDec("",clock_table[a]);
+					SERIAL_PRINTLN_PGM("ms");
+				}
+		}
+		break;
 
     case 's':
      {
@@ -327,12 +425,12 @@ void loop()
        pollBlanks();
        if(pin >= 0 && isNumberPeek()) {
            int value = pollInt();
-           
+           checkPinIsOutputMode(pin);		
            servo.attach(pin);
            servo.write(value);
            
-           Serial.println("");
-           Serial.print("New servo value on pin ");
+           Serial.println();
+           SERIAL_PRINT_PGM("New servo value on pin ");
            printPin(pin);
            printStrDec(": ", value);
            Serial.println();
@@ -340,6 +438,7 @@ void loop()
            // Keep the position until next input
            pollPeek();
            servo.attach(pin);
+		   clock_table[pin] = 0;
        }
      }
     break;
@@ -349,6 +448,10 @@ void loop()
       int pin = pollPin();
       if(pin >= 0) {
         setPin(pin,1);
+		// this is not an error, as you can set an input pin (to enable / disable pull up resistors, for example) 
+		// but let's warn the user, just in case
+		checkPinIsOutputMode(pin);	
+		clock_table[pin] = 0;
       }
      }
     break;
@@ -357,7 +460,9 @@ void loop()
      {
       int pin = pollPin();
       if(pin >= 0) {
+   	    checkPinIsOutputMode(pin);
         setPin(pin, 0);
+		clock_table[pin] = 0;
       }
      }
     break;
@@ -366,9 +471,11 @@ void loop()
      {
       int pin = pollPin();
       if(pin >= 0) {
+		checkPinIsOutputMode(pin);
         setPin(pin, 0);
         setPin(pin, 1);
         setPin(pin, 0);
+		clock_table[pin] = 0;
       }
      }
     break;
@@ -380,9 +487,9 @@ void loop()
       if(pin >= 0) {
         pinMode(pin, INPUT);
         Serial.println();
-        Serial.print("Pin ");
+        SERIAL_PRINT_PGM("Pin ");
         printPin(pin);
-        Serial.println(" is now INPUT");
+        SERIAL_PRINTLN_PGM(" is now INPUT");
        }
       }
     break;
@@ -394,9 +501,9 @@ void loop()
       if(pin >= 0) {
         pinMode(pin, OUTPUT);
         Serial.println();
-        Serial.print("Pin ");
+        SERIAL_PRINT_PGM("Pin ");
         printPin(pin);
-        Serial.println(" is now OUTPUT");
+        SERIAL_PRINTLN_PGM(" is now OUTPUT");
        }    
       }
      break;
@@ -438,28 +545,41 @@ void loop()
        // Write all directions to EEPROM
        // Write all digital values to EEPROM
        // Write all pwm values to EEPROM
-       for(int i = 0; i < NUM_ANALOG_INPUTS+A0; i++) {
-         int pin_mode  = *portModeRegister(digitalPinToPort(i)) & digitalPinToBitMask(i);// != 0;
-         int pin_value = digitalRead(i);
-		 if (2*i+1 < E2END) { 
-			 EEPROM.write(2*i,   pin_mode);
-			 EEPROM.write(2*i+1, pin_value);
+       for(int i = 0; i < ALLPINS; i++) {
+		   int pin_mode  = getPinMode(i);
+		   // != 0;
+           int pin_value = digitalRead(i);
+		   
+		   int offset = E2END-1-RECORD_SIZE*i;
+		   if (offset >=3) { 
+				EEPROM.write(offset,   pin_mode);
+				EEPROM.write(offset-1, pin_value);
+				EEPROM.write(offset-2, clock_table[i]>>8);
+				EEPROM.write(offset-3, clock_table[i]& 0xff);
 			 }
        }
      }
      Serial.println();
-     Serial.print("Saved digital pins to EEPROM");
+     SERIAL_PRINT_PGM("Saved state to EEPROM");
     break;
     
     case 'y':
      {
-       // Read all directions to EEPROM
+       // Read all directions to EEPROM				
        // Read all digital values to EEPROM
        // Read all pwm values to EEPROM
-       for(int i = 0; i < NUM_ANALOG_INPUTS+A0; i++) {
-		   if (2*i+1 < E2END) { 
-			   int pin_mode  = EEPROM.read(2*i);
-			   int pin_value = EEPROM.read(2*i + 1);
+
+	 // read / write the EEPROM from the back end, so that we might co-exist with other sketches on the device which 
+	 // would normally save from the start of eeprom.
+	   clearClockTable();
+       for(int i = 0; i < ALLPINS; i++) {
+		   int offset = E2END-1-RECORD_SIZE*i;
+		   if (offset > 3) { 
+			   int pin_mode  = EEPROM.read(offset);
+			   int pin_value = EEPROM.read(offset - 1);
+			   byte cv1 = EEPROM.read(offset- 2);
+			   byte cv2 = EEPROM.read(offset - 3);
+			   clock_table[i] = cv1<<8 | cv2;
 			   pinMode(i, pin_mode);
 			   //if(pin_mode != 0) {
 			   digitalWrite(i, pin_value);
@@ -468,14 +588,15 @@ void loop()
        }
      }
      Serial.println();
-     Serial.println("Loaded digital pins from EEPROM");
+     SERIAL_PRINTLN_PGM("Loaded state from EEPROM");
      printPorts();
      break;
      
    case 'z':
      Serial.println();
-     Serial.print("Reset ...");
-     for(int i = 0; i < NUM_ANALOG_INPUTS+A0; i++) {
+     SERIAL_PRINT_PGM("Reset ...");
+	 clearClockTable();
+     for(int i = 0; i < ALLPINS; i++) {
        pinMode(i, INPUT);
        digitalWrite(i, LOW);
      }
@@ -533,3 +654,21 @@ int freeRam()
 	int v;
 	return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
 	}
+//-----------------------------------------------------------------------------------------------------------------
+bool checkPinIsOutputMode( int pin_nbre )
+	{
+	if (pin_nbre<0) return false;
+	if ( getPinMode(pin_nbre)==0){ 
+		SERIAL_PRINTLN_PGM("Warning: pin is not set to input");
+		return false;
+		}
+	return true;
+	}
+//-----------------------------------------------------------------------------------------------------------------
+void clearClockTable()
+	{
+	for (int a=0;a< ALLPINS;a++)
+		clock_table[a] = a*0;
+
+	}
+//-----------------------------------------------------------------------------------------------------------------

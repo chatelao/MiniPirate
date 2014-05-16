@@ -15,6 +15,9 @@
  */
 
 #include "baseIO.h"
+#include "Strings_PGM_MEM.h"
+
+
 /*
 #include "base.h"
 #include "busPirateCore.h"//need access to bpConfig
@@ -720,7 +723,7 @@ boolean isNumberOrBlankPeek() {
 
 char pollSerial() {
 
-  char c;
+  char c=0;
   // send data only when you receive data:
   while(Serial.available() == 0);
   c = Serial.read();
@@ -809,19 +812,36 @@ int pollPin() {
         }
     }
   } 
-  return pin + pollInt();
+  pin += pollInt();
+  if (pin  >= NUM_DIGITAL_PINS)
+	  {
+	  SERIAL_PRINTLN_PGM ("Invalid pin number!");
+	  return -1;
+	  }
+  
+  return pin;
 }
 
 void printHighLow(int value) {
-  Serial.print(value == true ? "HIGH" : "LOW ");
+	if (value) 
+		{  SERIAL_PRINT_PGM("HIGH");    } 
+	else 
+		{ SERIAL_PRINT_PGM("LOW ");    } 
 }
+
+void printInOut(int value) {
+	if (value) 
+		{ SERIAL_PRINT_PGM(" OUTPUT");    } 
+	else 
+		{ SERIAL_PRINT_PGM("  INPUT");    }
+	}
 
 void printPin(int pin) {
   if(pin >= A0) {
-    Serial.print("A");    
+    SERIAL_PRINT_PGM("A");    
     pin -= A0;
   } else {
-    Serial.print("D");    
+    SERIAL_PRINT_PGM("D");    
   }
   Serial.print(pin);    
 }
@@ -830,20 +850,20 @@ void printPorts() {
        for(int i = 0; i < A0; i++) {
          int value = digitalRead(i);
 
-         Serial.print("Value on pin D");
+         SERIAL_PRINT_PGM("Value on pin D");
          Serial.print(i);
          if(i < 10) Serial.print(' ');
          // http://garretlab.web.fc2.com/en/arduino/inside/arduino/Arduino.h/portModeRegister.html
-         int pin_mode = *portModeRegister(digitalPinToPort(i)) & digitalPinToBitMask(i);
-         Serial.print(( pin_mode == 0 ? " INPUT  " : " OUTPUT " ));
-         Serial.print(": ");
+         int pin_mode = getPinMode(i);
+		 printInOut(pin_mode);
+         SERIAL_PRINT_PGM(": ");
          printHighLow(value);
-		 if (digitalPinHasPWM(i)) Serial.print(" PWM");
+		 if (digitalPinHasPWM(i)) SERIAL_PRINT_PGM(" PWM");
 		 if (digitalPinToInterrupt(i)>-1){
-			 Serial.print(" IRQ_");
+			 SERIAL_PRINT_PGM(" IRQ_");
 			 Serial.print(digitalPinToInterrupt(i));
 			 }
-         Serial.println("");
+         Serial.println();
        }
        for(int i = 0; i < NUM_ANALOG_INPUTS; i++) {
          int a_value = analogRead(i);
@@ -851,19 +871,21 @@ void printPorts() {
 
          printStrDec("Value on pin A", i);
          if(i < 10) Serial.print(' ');
-         int pin_mode = *portModeRegister(digitalPinToPort(A0+i)) & digitalPinToBitMask(A0+i);
-         Serial.print(( pin_mode == 0 ? " INPUT  " : " OUTPUT " ));
-         Serial.print(": ");
+         int pin_mode = getPinMode(A0+i);
+		 printInOut(pin_mode);
+         SERIAL_PRINT_PGM(": ");
          printHighLow(value);
          printStrDec(" / ", a_value,3);
-		 Serial.print(" / ");
+		 SERIAL_PRINT_PGM(" / ");
 		 extern float VCC;
 		 Serial.print(a_value / 1023.0f * VCC);
-		 Serial.print("V");
+		 SERIAL_PRINT_PGM("V");
      //    printStrDec(" / ", a_value);
          Serial.println();
        }
 }
+
+
 
 // Prints all port direction and values in a matrix (concise) format
 // Digital values are 8 across and analog are 4 across
@@ -871,28 +893,28 @@ void printPortsQuick() {
 	for(int i = 0; i < A0; i++) {
 		int value = digitalRead(i);
 		if (i%8==0) {
-			Serial.print("D");
+			SERIAL_PRINT_PGM("D");
 			Serial.print(i);
-			Serial.print(": ");
+			SERIAL_PRINT_PGM(": ");
 			if(i < 10) Serial.print(' ');
 			}
-		int pin_mode = *portModeRegister(digitalPinToPort(i)) & digitalPinToBitMask(i);
+		int pin_mode = getPinMode(i);
 		Serial.print(( pin_mode == 0 ? " <" : " >" ));
 		Serial.print(value?"1 ":"0 ");
-		if (i%8==7) Serial.println("");
+		if (i%8==7) Serial.println();
 		}
 	Serial.println("");
 	for(int i = 0; i < NUM_ANALOG_INPUTS; i++) {
 		int a_value = analogRead(i);
 		int value = digitalRead(A0+i);
 		if (i%4==0) {
-			Serial.print("A");
+			SERIAL_PRINT_PGM("A");
 			Serial.print(i);
-			Serial.print(": ");
+			SERIAL_PRINT_PGM(": ");
 			if(i < 10) Serial.print(' ');
 			}
 		
-		int pin_mode = *portModeRegister(digitalPinToPort(A0+i)) & digitalPinToBitMask(A0+i);
+		int pin_mode =getPinMode(A0+i);
 		Serial.print(( pin_mode == 0 ? " <" : " >" ));
 		Serial.print(value?"1":"0");
 		printStrDec("(",a_value,3);
@@ -902,8 +924,8 @@ void printPortsQuick() {
 		if (a_value<10) Serial.print('0');
 		Serial.print(a_value);
 */
-		Serial.print(")");
-		if (i%4==3) Serial.println("");
+		SERIAL_PRINT_PGM(")");
+		if (i%4==3) Serial.println();
 		}
 	}
 
