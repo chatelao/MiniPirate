@@ -172,5 +172,11 @@ void printHighLow(int value);
 void printPin(int pin);
 void printPorts();
 void printPortsQuick();
+
+inline int getPinMode( int i )
+	{
+	return *portModeRegister(digitalPinToPort(i)) & digitalPinToBitMask(i);
+	}
+
 #endif
 
