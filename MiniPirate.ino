@@ -35,9 +35,17 @@
 
 #define ALLPINS (NUM_ANALOG_INPUTS+A0)
 
+// multipled by 1023 since that's the resolution of the ADC
+#if defined(__AVR_ATmega8__)
+#define INTERNAL_VOLTAGE_REFERENCE 2618880 //   1125300 = 1.1*1023*1000
+// ATMega8 uses 2.56V
+#else
+#define INTERNAL_VOLTAGE_REFERENCE 1125300 //   1125300 = 1.1*1023*1000
+#endif
+
 int clock_table[ALLPINS];
 
-long readAVR_VCC (long voltage_reference = 1125300);
+long readAVR_VCC (long voltage_reference = INTERNAL_VOLTAGE_REFERENCE);
 long readAVRInternalTemp();
 int freeRam();
 bool checkPinIsOutputMode( int pin_nbre );
@@ -185,7 +193,7 @@ void setup()
   Serial.print (NUM_ANALOG_INPUTS); 
   SERIAL_PRINTLN_PGM(" analog pins.");
   SERIAL_PRINT_PGM("CPU is set to ");
-  Serial.print ((float) F_CPU / 1000000.0); 
+  Serial.print ((float) F_CPU / 1023000.0); 
   SERIAL_PRINTLN_PGM("Mhz");
 
 // Run initial scan
@@ -274,7 +282,9 @@ void loop()
 			}
 		else {
 			Serial.print (VCC);
-			SERIAL_PRINTLN_PGM(" Volts");
+			SERIAL_PRINT_PGM(" Volts, based on a nominal internal reference of ");
+			Serial.print(INTERNAL_VOLTAGE_REFERENCE/1000000.0);
+			SERIAL_PRINTLN_PGM(" Volts, +/-10% per chip ");
 			}
 		}
 		break;	
@@ -368,7 +378,7 @@ void loop()
 		 Serial.println();
 			SERIAL_PRINTLN_PGM("Starting sweep of all pins in sequence:");
 			SERIAL_PRINTLN_PGM("Each pin will be briefly set to output, flipped state, and then restored");
-			SERIAL_PRINTLN_PGM("Clocks are stopped. ");x
+			SERIAL_PRINTLN_PGM("Clocks are stopped. ");
 			for (int a=0;a<NUM_DIGITAL_PINS;a++)
 				{
 				int original_pin_mode = getPinMode(a);
