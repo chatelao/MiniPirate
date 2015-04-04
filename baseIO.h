@@ -17,8 +17,11 @@
 #ifndef baseIO_h
 #define baseIO_h
 
-#include <WProgram.h>
-#include <Arduino.h>
+#if defined(ARDUINO) && ARDUINO >= 100
+#include "Arduino.h"
+#else
+#include "WProgram.h"
+#endif
 /*
 //manage user terminal input
 unsigned int bpUserNumberPrompt(unsigned int maxBytes, unsigned int maxValue, unsigned int defValue);

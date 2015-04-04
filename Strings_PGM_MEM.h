@@ -1,13 +1,15 @@
 #pragma once
 
+#if defined(ARDUINO) && ARDUINO >= 100
+#include "Arduino.h"
+#else
+#include "WProgram.h"
+#endif
+
 #include <avr/pgmspace.h>
 
-#include <WProgram.h>
-#include <Arduino.h>
+void printProgramString (const char * str PROGMEM, Print & target);
 
-
-void printProgramString (prog_char * str, Print & target);
-
-#define SERIAL_PRINT_PGM(a) { static prog_char str[] PROGMEM = a; printProgramString (str,Serial);};
-#define SERIAL_PRINTLN_PGM(a) { static prog_char str[] PROGMEM = a; printProgramString (str,Serial); Serial.println(); };
+#define SERIAL_PRINT_PGM(a) { static const char str[] PROGMEM = a; printProgramString (str,Serial);};
+#define SERIAL_PRINTLN_PGM(a) { static const char str[] PROGMEM = a; printProgramString (str,Serial); Serial.println(); };
 

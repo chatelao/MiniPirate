@@ -3,7 +3,7 @@
 
 
 //-----------------------------------------------------------------------------------------------------------------
-void printProgramString( prog_char * str, Print & target )
+void printProgramString (const char * str PROGMEM, Print & target)
 	{
 	static char program_string_copy_buffer[100];  
 	strcpy_P(program_string_copy_buffer, (str) );

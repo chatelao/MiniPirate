@@ -18,6 +18,9 @@
 // April 2014
 // Using Arduino 1.0.1
 //
+// April 2015
+// Update for Use with IDE-1.6.3
+//
 
 #include <ctype.h>
 #include <Wire.h>
@@ -81,7 +84,7 @@ void mpHelp() {
   SERIAL_PRINTLN_PGM("p - Show all port values & directions");
   SERIAL_PRINTLN_PGM("q - Show all port values & directions (quick)");
 
-  SERIAL_PRINTLN_PGM(". - Show port value & direction");
+//   SERIAL_PRINTLN_PGM(". - Show port value & direction");
   SERIAL_PRINTLN_PGM("< - Set a port as INPUT");
   SERIAL_PRINTLN_PGM("> - Set a port as OUTPUT");
 
@@ -94,7 +97,7 @@ void mpHelp() {
   // Serial.println("b - Show bar graph of analog input");
   SERIAL_PRINTLN_PGM("g - Set analog (pwm) value");
 
- SERIAL_PRINTLN_PGM("s - Set servo value");
+  SERIAL_PRINTLN_PGM("s - Set servo value");
 
   //
   // I2C communication
@@ -149,7 +152,7 @@ void mpHelp() {
   //
   // Storing a config to recover after power-up
   //
- SERIAL_PRINTLN_PGM("x - save current config to eeprom");
+  SERIAL_PRINTLN_PGM("x - save current config to eeprom");
   SERIAL_PRINTLN_PGM("y - load last config from eeprom");
   SERIAL_PRINTLN_PGM("z - set all ports to input and low");
 
@@ -186,7 +189,7 @@ void setup()
   modeI2C.setup();
 
   Serial.begin(BAUD_RATE);
-  SERIAL_PRINTLN_PGM("ArduPirate: v0.12 ( " __TIMESTAMP__ " ) ");
+  SERIAL_PRINTLN_PGM("MiniPirate: v0.2 ( " __TIMESTAMP__ " ) ");
   SERIAL_PRINT_PGM("Device has ");
   Serial.print (NUM_DIGITAL_PINS - NUM_ANALOG_INPUTS); 
   SERIAL_PRINT_PGM(" digital pins and ");
@@ -290,12 +293,20 @@ void loop()
 		break;	
 	case 'f':
 		Serial.println();
+		SERIAL_PRINT_PGM("RAM ");
 		Serial.print (freeRam());
+		SERIAL_PRINT_PGM(" of ");
+		Serial.print (RAMEND);
 		SERIAL_PRINTLN_PGM(" bytes free");
 		
-		SERIAL_PRINT_PGM("EEPROM is ");
+		SERIAL_PRINT_PGM("EEPROM size is ");
 		Serial.print (E2END);
 		SERIAL_PRINTLN_PGM(" bytes");
+
+		SERIAL_PRINT_PGM("Flash size is ");
+		Serial.print (FLASHEND);
+		SERIAL_PRINTLN_PGM(" bytes");
+ 
 		break;    
 	case 'e':
 
@@ -489,6 +500,17 @@ void loop()
       }
      }
     break;
+
+/* tbd
+    case '.':
+     {
+      int pin = pollPin();
+      if(pin >= 0) {
+        printPin(pin);
+      }
+     }
+    break;
+*/
 
     case '<':
      {
