@@ -8,7 +8,7 @@
 // http://dangerousprototypes.com/docs/Bus_Pirate_menu_options_guide
 //
 // Pin Layout:
-// - A4: SDAp
+// - A4: SDA
 // - A5: SCL
 //
 // Add command line UI and Port manipulations by O. Chatelain
@@ -26,6 +26,7 @@
 #include <Wire.h>
 #include <EEPROM.h>
 #include <Servo.h>
+
 #include "pins_arduino.h"
 #include "baseIO.h"
 #include "modeBase.h"
@@ -361,6 +362,7 @@ void loop()
 	   
        if(pin_nbre >= 0 && isNumberPeek()) {
 		   clock_table[pin_nbre] = 0;
+      /*
 		   if (digitalPinHasPWM(pin_nbre))  {
 			   int value = pollInt();
 				analogWrite(pin_nbre, value);
@@ -370,7 +372,7 @@ void loop()
 				printStrDec(": ", value);
 				Serial.println();
 			   }
-		   else {
+		   else */{
 			   Serial.println();
 			   SERIAL_PRINT_PGM("Pin ");
 			   printPin(pin_nbre);
