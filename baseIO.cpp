@@ -858,6 +858,7 @@ void printPorts() {
 		 printInOut(pin_mode);
          SERIAL_PRINT_PGM(": ");
          printHighLow(value);
+         /*
 		 if (digitalPinHasPWM(i)) SERIAL_PRINT_PGM(" PWM");
 		 if (digitalPinToInterrupt(i)>-1){
 			 SERIAL_PRINT_PGM(" IRQ_");
@@ -882,6 +883,7 @@ void printPorts() {
 		 SERIAL_PRINT_PGM("V");
      //    printStrDec(" / ", a_value);
          Serial.println();
+       */
        }
 }
 
