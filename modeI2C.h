@@ -19,7 +19,7 @@
 
 #include "modeBase.h"
 #include <Wire.h>
-#include "../Wire/Wire.h" // Hack: See http://forum.arduino.cc/index.php/topic,42818.0.html#5
+// #include "../Wire/Wire.h" // Hack: See http://forum.arduino.cc/index.php/topic,42818.0.html#5
 
 #define I2C_LIST_SIZE 127
 
