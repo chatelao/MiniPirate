@@ -62,7 +62,7 @@ ModeI2C   modeI2C;
 enum mpModes { mNONE = 'n', mI2C = 'i', mSPI = 's', mMEMORY = 'm', mEEPROM = 'e', mFLASH = 'f' };
 mpModes mpMode;
 
-char* printMode () {
+char const * printMode () {
   switch(mpMode)  {
     case mNONE:   return "";
     case mI2C:    return "I2C";

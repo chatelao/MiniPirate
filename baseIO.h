@@ -151,9 +151,9 @@ unsigned int bpReadFlash(unsigned int page, unsigned int addr);
 unsigned long int bpReadFlashFull(unsigned int page, unsigned int addr);
 */
 
-void printStrDec(char* str, int dec_nbre,int pad_digits=0);
-void printStrHex(char* str, int hex_nbre);
-void printStrBin(char* str, int bin_nbre);
+void printStrDec(char const *str, int dec_nbre,int pad_digits=0);
+void printStrHex(char const *str, int hex_nbre);
+void printStrBin(char const *str, int bin_nbre);
 
 
 char pollPeek();

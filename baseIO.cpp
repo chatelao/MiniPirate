@@ -686,18 +686,18 @@ void __attribute__((interrupt, no_auto_psv)) _U1TXInterrupt(void) {
 // New functions from MiniPirate
 //
 
-void printStrDec(char* str, int dec_nbre, int pad_digits) {
+void printStrDec(char const *str, int dec_nbre, int pad_digits) {
   Serial.print(str);
   while (pad_digits>0 && dec_nbre < pow(10,pad_digits--)) Serial.print('0');
   Serial.print(dec_nbre);
 }
 
-void printStrHex(char* str, int hex_nbre) {
+void printStrHex(char const *str, int hex_nbre) {
   Serial.print(str);
   bpWhex(hex_nbre);
 }
 
-void printStrBin(char* str, int bin_nbre) {
+void printStrBin(char const *str, int bin_nbre) {
   Serial.print(str);
   bpWbin(bin_nbre);
 }
