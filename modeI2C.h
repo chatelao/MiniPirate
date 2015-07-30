@@ -39,4 +39,5 @@ public:
   void write();
 };
 
-#endif modeI2C
+#endif
+

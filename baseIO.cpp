@@ -43,14 +43,14 @@ void bpEchoState(unsigned int c) {
 
 //Write a string to the user terminal
 
-void bpWstring(char *s) {
+void bpWstring(char const *s) {
     char c;
     while ((c = *s++)) UART1TX(c);
 }
 
 //write a string to the user terminal, finish with a line break
 
-void bpWline(char *s) {
+void bpWline(char const *s) {
     char c;
     while ((c = *s++)) UART1TX(c);
     UART1TX(0x0d);

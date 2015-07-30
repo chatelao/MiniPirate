@@ -25,5 +25,5 @@ public:
   virtual void write() = 0;
 };
 
-#endif modeBase_h
+#endif
 
