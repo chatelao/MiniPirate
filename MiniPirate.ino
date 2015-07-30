@@ -71,6 +71,7 @@ char const * printMode () {
     case mEEPROM: return "EEPROM";
     case mFLASH:  return "Flash";
   }
+  return "";
 }
 
 void mpHelp() {
