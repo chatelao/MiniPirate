@@ -3,9 +3,7 @@ sudo: false
 before_install:
   - source <(curl -SLs https://raw.githubusercontent.com/chatelao/travis-ci-arduino/master/install.sh)
 script:
-  - build_platform uno 1.6.5
-  - build_platform esp8266 1.6.4
-#  - build_main_platforms 1.6.5
+  - build_main_platforms
 notifications:
   email:
     on_success: change
