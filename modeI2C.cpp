@@ -125,18 +125,23 @@ void ModeI2C::write() {
        int count = 0;
        Wire.beginTransmission(getActiveAddress());
 
+       Serial.println();
+       Serial.print("Wrote ");
+
        while(isNumberOrBlankPeek()) {
          pollBlanks();
          if(isNumberPeek()) {
            byte write_value = pollInt();
            Wire.write(write_value);
+           Serial.print("(");
+           Serial.print(write_value);
+           Serial.print("),");
            count++;
          }
        }
        Wire.endTransmission();
 
-       Serial.println();
-       Serial.print("Wrote ");
+       Serial.print(" total of ");
        Serial.print(count);
        Serial.print(" bytes to ");
        bpWhex(getActiveAddress());

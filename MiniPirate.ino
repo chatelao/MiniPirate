@@ -25,8 +25,9 @@
 #include <ctype.h>
 #include <Wire.h>
 #include <EEPROM.h>
+#ifndef ESP8266
 #include <Servo.h>
-
+#endif
 #include "pins_arduino.h"
 #include "baseIO.h"
 #include "modeBase.h"
@@ -35,7 +36,7 @@
 
 //-----------------------------------------------------------------------------------------------------------------
 
-#define BAUD_RATE 9600
+#define BAUD_RATE 57600
 
 #define ALLPINS (NUM_ANALOG_INPUTS+A0)
 
@@ -56,7 +57,9 @@ bool checkPinIsOutputMode( int pin_nbre );
 
 
 float VCC;
+#ifndef ESP8266
 Servo     servo;
+#endif
 ModeI2C   modeI2C;
 
 enum mpModes { mNONE = 'n', mI2C = 'i', mSPI = 's', mMEMORY = 'm', mEEPROM = 'e', mFLASH = 'f' };
@@ -191,7 +194,7 @@ void setup()
   modeI2C.setup();
 
   Serial.begin(BAUD_RATE);
-  SERIAL_PRINTLN_PGM("MiniPirate: v0.2 ( " __TIMESTAMP__ " ) ");
+  SERIAL_PRINTLN_PGM("MiniPirate: v0.3 ( " __TIMESTAMP__ " ) ");
   SERIAL_PRINT_PGM("Device has ");
   Serial.print (NUM_DIGITAL_PINS - NUM_ANALOG_INPUTS); 
   SERIAL_PRINT_PGM(" digital pins and ");
@@ -203,8 +206,10 @@ void setup()
 
 // Run initial scan
   Serial.println();
+#ifndef ESP8266
   VCC = readAVR_VCC()/1000.0f;
   if (VCC < 0.0f) VCC = 5.0f;
+#endif
   clearClockTable();
 
   mpHelp();
@@ -267,7 +272,11 @@ void loop()
 	case 't':
 		{
 		Serial.println();
+#ifndef ESP8266
 		int t = readAVRInternalTemp();
+#else
+		int t = -1;
+#endif
 		if (t < 0) 	{
 			SERIAL_PRINTLN_PGM("Not supported on this chip");
 			}
@@ -280,7 +289,9 @@ void loop()
 	case 'v':
 		{
 		Serial.println();
+#ifndef ESP8266
 		VCC = readAVR_VCC()/1000.0;
+#endif
 		if (VCC < 0.0f) 	{
 			SERIAL_PRINTLN_PGM("Not supported on this chip");
 			VCC=5.0f;
@@ -293,6 +304,7 @@ void loop()
 			}
 		}
 		break;	
+#ifndef ESP8266
 	case 'f':
 		Serial.println();
 		SERIAL_PRINT_PGM("RAM ");
@@ -321,6 +333,7 @@ void loop()
 		SERIAL_PRINTLN_PGM("done");
 
 		break;   
+#endif
 	case 'm':
      {
       char d = pollLowSerial();
@@ -363,7 +376,7 @@ void loop()
 	   
        if(pin_nbre >= 0 && isNumberPeek()) {
 		   clock_table[pin_nbre] = 0;
-      /*
+#ifdef digitalPinHasPWM
 		   if (digitalPinHasPWM(pin_nbre))  {
 			   int value = pollInt();
 				analogWrite(pin_nbre, value);
@@ -372,8 +385,9 @@ void loop()
 				printPin(pin_nbre);
 				printStrDec(": ", value);
 				Serial.println();
-			   }
-		   else */{
+		   } else
+#endif
+{
 			   Serial.println();
 			   SERIAL_PRINT_PGM("Pin ");
 			   printPin(pin_nbre);
@@ -450,9 +464,10 @@ void loop()
        if(pin >= 0 && isNumberPeek()) {
            int value = pollInt();
            checkPinIsOutputMode(pin);		
+#ifndef ESP8266
            servo.attach(pin);
            servo.write(value);
-           
+#endif           
            Serial.println();
            SERIAL_PRINT_PGM("New servo value on pin ");
            printPin(pin);
@@ -461,7 +476,9 @@ void loop()
            
            // Keep the position until next input
            pollPeek();
+#ifndef ESP8266
            servo.attach(pin);
+#endif
 		   clock_table[pin] = 0;
        }
      }
@@ -575,6 +592,7 @@ void loop()
       modeI2C.write(); 
     break;
     
+#ifndef ESP8266    
     case 'x':
      {
        // Write all directions to EEPROM
@@ -626,6 +644,7 @@ void loop()
      SERIAL_PRINTLN_PGM("Loaded state from EEPROM");
      printPorts();
      break;
+#endif
      
    case 'z':
      Serial.println();
@@ -639,6 +658,7 @@ void loop()
   }
 }
 
+#ifndef ESP8266
 long readAVR_VCC(long voltage_reference)
 	{
 	// Read 1.1V reference against AVcc
@@ -689,6 +709,8 @@ int freeRam()
 	int v;
 	return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
 	}
+#endif
+
 //-----------------------------------------------------------------------------------------------------------------
 bool checkPinIsOutputMode( int pin_nbre )
 	{
