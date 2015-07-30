@@ -1,7 +1,5 @@
 #include "Strings_PGM_MEM.h"
 
-
-
 //-----------------------------------------------------------------------------------------------------------------
 void printProgramString (const char * str PROGMEM, Print & target)
 	{
