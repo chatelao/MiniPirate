@@ -882,8 +882,8 @@ void printPorts() {
 		 Serial.print(a_value / 1023.0f * VCC);
 		 SERIAL_PRINT_PGM("V");
      //    printStrDec(" / ", a_value);
-         Serial.println();
 #endif // digitalPinHasPWM
+         Serial.println();
        }
 }
 

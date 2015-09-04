@@ -104,6 +104,10 @@ void mpHelp() {
 
   SERIAL_PRINTLN_PGM("s - Set servo value");
 
+  SERIAL_PRINTLN_PGM("\\A2/A3 - Set Pin A2 to low, Pin A3 to high (and both to output)");
+  SERIAL_PRINTLN_PGM("s 5 90 - Set Servo on Pin D5 to 90°");
+  SERIAL_PRINTLN_PGM("i 2 r 10 - Switch to I2C device 2 and read 10 bytes");
+
   //
   // I2C communication
   //
