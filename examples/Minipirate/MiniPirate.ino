@@ -36,7 +36,7 @@
 
 //-----------------------------------------------------------------------------------------------------------------
 
-#define BAUD_RATE 57600
+#define BAUD_RATE 9600 // Standard baud rate of an out of the box installation
 
 #define ALLPINS (NUM_ANALOG_INPUTS+A0)
 
