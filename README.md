@@ -33,4 +33,3 @@ List of supported commands:
 + u - Show system uptime (or clock)
 + e - Erase EEPROM
 + * - Reboot
-+ 
