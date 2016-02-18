@@ -80,8 +80,6 @@ void ModeI2C::select(char sel_nbre) {
     Serial.println("");
     Serial.print("Device changed to ");
     Serial.print(i2c_address_active);
-    printStrHex(" (", this->getActiveAddress());
-    Serial.print(")");
   }
   Serial.println("");
 }
