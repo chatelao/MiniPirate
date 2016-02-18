@@ -24,7 +24,11 @@
 
 #include <ctype.h>
 #include <Wire.h>
+#ifdef __AVR__
 #include <EEPROM.h>
+#else
+#define NUM_DIGITAL_PINS 10
+#endif
 #ifndef ESP8266
 #include <Servo.h>
 #endif
@@ -36,7 +40,7 @@
 
 //-----------------------------------------------------------------------------------------------------------------
 
-#define BAUD_RATE 9600 // Standard baud rate of an out of the box installation
+#define BAUD_RATE 57600
 
 #define ALLPINS (NUM_ANALOG_INPUTS+A0)
 
@@ -50,9 +54,11 @@
 
 int clock_table[ALLPINS];
 
+#ifdef __AVR__
 long readAVR_VCC (long voltage_reference = INTERNAL_VOLTAGE_REFERENCE);
 long readAVRInternalTemp();
 int freeRam();
+#endif
 bool checkPinIsOutputMode( int pin_nbre );
 
 
@@ -103,10 +109,6 @@ void mpHelp() {
   SERIAL_PRINTLN_PGM("g - Set analog (pwm) value");
 
   SERIAL_PRINTLN_PGM("s - Set servo value");
-
-  SERIAL_PRINTLN_PGM("\\A2/A3 - Set Pin A2 to low, Pin A3 to high (and both to output)");
-  SERIAL_PRINTLN_PGM("s 5 90 - Set Servo on Pin D5 to 90°");
-  SERIAL_PRINTLN_PGM("i 2 r 10 - Switch to I2C device 2 and read 10 bytes");
 
   //
   // I2C communication
@@ -210,7 +212,7 @@ void setup()
 
 // Run initial scan
   Serial.println();
-#ifndef ESP8266
+#ifdef __AVR__
   VCC = readAVR_VCC()/1000.0f;
   if (VCC < 0.0f) VCC = 5.0f;
 #endif
@@ -276,7 +278,7 @@ void loop()
 	case 't':
 		{
 		Serial.println();
-#ifndef ESP8266
+#ifdef __AVR__
 		int t = readAVRInternalTemp();
 #else
 		int t = -1;
@@ -293,7 +295,7 @@ void loop()
 	case 'v':
 		{
 		Serial.println();
-#ifndef ESP8266
+#ifdef __AVR__
 		VCC = readAVR_VCC()/1000.0;
 #endif
 		if (VCC < 0.0f) 	{
@@ -308,23 +310,24 @@ void loop()
 			}
 		}
 		break;	
-#ifndef ESP8266
+#ifdef __AVR__
 	case 'f':
 		Serial.println();
 		SERIAL_PRINT_PGM("RAM ");
 		Serial.print (freeRam());
 		SERIAL_PRINT_PGM(" of ");
+#ifdef __AVR__
 		Serial.print (RAMEND);
 		SERIAL_PRINTLN_PGM(" bytes free");
 		
 		SERIAL_PRINT_PGM("EEPROM size is ");
 		Serial.print (E2END);
-		SERIAL_PRINTLN_PGM(" bytes");
+		SERIAL_PRINT_PGM(" bytes");
+    SERIAL_PRINTLN_PGM("");
 
 		SERIAL_PRINT_PGM("Flash size is ");
 		Serial.print (FLASHEND);
 		SERIAL_PRINTLN_PGM(" bytes");
- 
 		break;    
 	case 'e':
 
@@ -337,6 +340,7 @@ void loop()
 		SERIAL_PRINTLN_PGM("done");
 
 		break;   
+#endif  // __AVR__
 #endif
 	case 'm':
      {
@@ -596,7 +600,7 @@ void loop()
       modeI2C.write(); 
     break;
     
-#ifndef ESP8266    
+#ifdef __AVR__
     case 'x':
      {
        // Write all directions to EEPROM
@@ -662,7 +666,7 @@ void loop()
   }
 }
 
-#ifndef ESP8266
+#ifdef __AVR__
 long readAVR_VCC(long voltage_reference)
 	{
 	// Read 1.1V reference against AVcc
