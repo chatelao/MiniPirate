@@ -6,17 +6,17 @@ A simple commandline to scan I2C, read/write GPIO, read/write EEPROM and read CP
 
 ### General Commands
 
-| Command | Description | Example |
-|---|---|---|
-| `h` / `?` | Show this help | `h` |
-| `v` | Show AVR VCC reading | `v` |
-| `t` | Show AVR internal temperature reading | `t` |
-| `f` | Show free memory | `f` |
-| `u` | Show system uptime (or clock) | `u` |
-| `e` | Erase EEPROM | `e` |
-| `*` | Reboot | `*` |
-| `x` | save current config to eeprom | `x` |
-| `y` | load last config from eeprom | `y` |
+| Command | Description | Example | Output Example |
+|---|---|---|---|
+| `h` / `?` | Show this help | `h` | (help text) |
+| `v` | Show AVR VCC reading | `v` | `VCC: 5012mV` |
+| `t` | Show AVR internal temperature reading | `t` | `Temp: 25.4C`|
+| `f` | Show free memory | `f` | `Mem: 1234` |
+| `u` | Show system uptime (or clock) | `u` | `Uptime: 12345ms` |
+| `e` | Erase EEPROM | `e` | `EEPROM erased` |
+| `*` | Reboot | `*` | `Rebooting...` |
+| `x` | save current config to eeprom | `x` | `saved` |
+| `y` | load last config from eeprom | `y` | `loaded` |
 
 ### GPIO Commands
 
