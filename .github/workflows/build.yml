@@ -1,0 +1,18 @@
+name: Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arduino/setup-arduino-cli@v2
+      - run: |
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr
+      - run: arduino-cli compile --fqbn arduino:avr:uno
