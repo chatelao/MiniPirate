@@ -30,6 +30,12 @@
 #define NUM_ANALOG_INPUTS 4
 #endif
 
+#ifndef digitalPinHasPWM
+#if defined(ARDUINO_ARCH_RP2040)
+#define digitalPinHasPWM(p) ((p) < NUM_DIGITAL_PINS)
+#endif
+#endif
+
 /*
 //manage user terminal input
 unsigned int bpUserNumberPrompt(unsigned int maxBytes, unsigned int maxValue, unsigned int defValue);
