@@ -1,0 +1,29 @@
+name: Arduino Library Build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Install platform and libraries
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr
+          arduino-cli lib install Servo
+
+      - name: Link library
+        run: |
+          mkdir -p $HOME/Arduino/libraries
+          ln -s $GITHUB_WORKSPACE $HOME/Arduino/libraries/MiniPirate
+
+      - name: Compile Sketch
+        run: |
+          arduino-cli compile --fqbn arduino:avr:uno examples/Minipirate/Minipirate.ino
