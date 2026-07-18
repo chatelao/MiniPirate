@@ -111,6 +111,7 @@ void mpHelp() {
   SERIAL_PRINTLN_PGM("a - Analog reading");
   SERIAL_PRINTLN_PGM("aa - Continuous analog reading");
   SERIAL_PRINTLN_PGM("g - Set analog (pwm) value");
+  SERIAL_PRINTLN_PGM("gg - Change analog (pwm) frequency");
 
   SERIAL_PRINTLN_PGM("s - Set servo value");
 
@@ -443,31 +444,51 @@ void loop()
 
     case 'g':
      {
-       int pin_nbre = pollPin();
-       pollBlanks();
-	   checkPinIsOutputMode(pin_nbre);
-	   
-       if(pin_nbre >= 0 && isNumberPeek()) {
-		   clock_table[pin_nbre] = 0;
-#ifdef digitalPinHasPWM
-		   if (digitalPinHasPWM(pin_nbre))  {
-			   int value = pollInt();
-				analogWrite(pin_nbre, value);
-				Serial.println();
-				SERIAL_PRINT_PGM("New analog value on pin ");
-				printPin(pin_nbre);
-				printStrDec(": ", value);
-				Serial.println();
-		   } else
+       if (tolower(pollPeek()) == 'g') {
+         pollSerial(); // consume second 'g'
+         pollBlanks();
+         if (isNumberPeek()) {
+           int freq = pollInt();
+           Serial.println();
+#if defined(ESP8266) || defined(ARDUINO_ARCH_RP2040)
+           analogWriteFreq(freq);
+           SERIAL_PRINT_PGM("New PWM frequency set to ");
+           Serial.print(freq);
+           SERIAL_PRINTLN_PGM(" Hz");
+#else
+           SERIAL_PRINTLN_PGM("Changing PWM frequency is not supported on this chip");
 #endif
-{
-			   Serial.println();
-			   SERIAL_PRINT_PGM("Pin ");
-			   printPin(pin_nbre);
-			   SERIAL_PRINT_PGM(" does not support PWM output");
-			   Serial.println();
-				}
-		   }
+         } else {
+           Serial.println();
+           SERIAL_PRINTLN_PGM("Invalid frequency value!");
+         }
+       } else {
+         int pin_nbre = pollPin();
+         pollBlanks();
+         checkPinIsOutputMode(pin_nbre);
+
+         if(pin_nbre >= 0 && isNumberPeek()) {
+           clock_table[pin_nbre] = 0;
+#ifdef digitalPinHasPWM
+           if (digitalPinHasPWM(pin_nbre))  {
+             int value = pollInt();
+             analogWrite(pin_nbre, value);
+             Serial.println();
+             SERIAL_PRINT_PGM("New analog value on pin ");
+             printPin(pin_nbre);
+             printStrDec(": ", value);
+             Serial.println();
+           } else
+#endif
+           {
+             Serial.println();
+             SERIAL_PRINT_PGM("Pin ");
+             printPin(pin_nbre);
+             SERIAL_PRINT_PGM(" does not support PWM output");
+             Serial.println();
+           }
+         }
+       }
      }
     break;
 
