@@ -15,8 +15,9 @@ jobs:
 
       - name: Install platform and libraries
         run: |
-          arduino-cli core update-index
+          arduino-cli core update-index --additional-urls https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
           arduino-cli core install arduino:avr
+          arduino-cli core install rp2040:rp2040 --additional-urls https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
           arduino-cli lib install Servo
 
       - name: Link library
@@ -27,3 +28,5 @@ jobs:
       - name: Compile Sketch
         run: |
           arduino-cli compile --fqbn arduino:avr:uno examples/Minipirate/Minipirate.ino
+          arduino-cli compile --fqbn rp2040:rp2040:rpipico examples/Minipirate/Minipirate.ino
+          arduino-cli compile --fqbn rp2040:rp2040:rpipico2 examples/Minipirate/Minipirate.ino
