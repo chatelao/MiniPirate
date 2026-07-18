@@ -32,6 +32,7 @@ A simple commandline to scan I2C, read/write GPIO, read/write EEPROM and read CP
 | `$` | Do a pin sweep | `$` |
 | `c` | Set port to clock high and low with given duration | `c 8 100` (clocks pin 8 with 100ms duration)|
 | `a` | Analog reading | `a 0` or `a a0` (reads analog value from pin A0) |
+| `aa` | Continuous analog reading | `aa` or `aa 100` (continuous reading of analog values) |
 | `g` | Set analog (pwm) value | `g 9 128` (sets PWM on pin 9 to 128)|
 | `s` | Set servo value | `s 10 90` (sets servo on pin 10 to 90 degrees)|
 | `\A2/A3`| Set Pin A2 to low, Pin A3 to high (and both to output) | `\A2/A3` |
