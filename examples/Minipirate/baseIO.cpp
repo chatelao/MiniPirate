@@ -846,7 +846,8 @@ void printPin(int pin) {
 }
 
 void printPorts() {
-       for(int i = 0; i < A0; i++) {
+       int limit = (A0 == 0) ? NUM_DIGITAL_PINS : A0;
+       for(int i = 0; i < limit; i++) {
          int value = digitalRead(i);
 
          SERIAL_PRINT_PGM("Value on pin D");
@@ -892,7 +893,8 @@ void printPorts() {
 // Prints all port direction and values in a matrix (concise) format
 // Digital values are 8 across and analog are 4 across
 void printPortsQuick() {
-	for(int i = 0; i < A0; i++) {
+	int limit = (A0 == 0) ? NUM_DIGITAL_PINS : A0;
+	for(int i = 0; i < limit; i++) {
 		int value = digitalRead(i);
 		if (i%8==0) {
 			SERIAL_PRINT_PGM("D");

@@ -20,10 +20,11 @@ jobs:
 
       - name: Install platform and libraries
         run: |
-          arduino-cli core update-index --additional-urls https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json,https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectronics_index.json
+          arduino-cli core update-index --additional-urls https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json,https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectronics_index.json,https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
           arduino-cli core install arduino:avr
           arduino-cli core install rp2040:rp2040 --additional-urls https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
           arduino-cli core install STMicroelectronics:stm32 --additional-urls https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectronics_index.json
+          arduino-cli core install Seeeduino:renesas_uno --additional-urls https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
           arduino-cli lib install Servo
 
       - name: Link library
@@ -49,6 +50,9 @@ jobs:
           cp examples/Minipirate/build/STMicroelectronics.stm32.Nucleo_64/Minipirate.ino.bin examples/Minipirate/build/STMicroelectronics.stm32.Nucleo_64-f446re/
           cp examples/Minipirate/build/STMicroelectronics.stm32.Nucleo_64/Minipirate.ino.hex examples/Minipirate/build/STMicroelectronics.stm32.Nucleo_64-f446re/
 
+          # XIAO RA4M1
+          arduino-cli compile --fqbn Seeeduino:renesas_uno:XIAO_RA4M1 -e examples/Minipirate/Minipirate.ino
+
       - name: Prepare Release Assets
         run: |
           mkdir -p assets
@@ -62,6 +66,8 @@ jobs:
           cp examples/Minipirate/build/STMicroelectronics.stm32.Nucleo_64-g431rb/Minipirate.ino.hex assets/Minipirate-nucleo_g431rb.hex
           cp examples/Minipirate/build/STMicroelectronics.stm32.Nucleo_64-f446re/Minipirate.ino.bin assets/Minipirate-nucleo_f446re.bin
           cp examples/Minipirate/build/STMicroelectronics.stm32.Nucleo_64-f446re/Minipirate.ino.hex assets/Minipirate-nucleo_f446re.hex
+          cp examples/Minipirate/build/Seeeduino.renesas_uno.XIAO_RA4M1/Minipirate.ino.bin assets/Minipirate-xiao_ra4m1.bin
+          cp examples/Minipirate/build/Seeeduino.renesas_uno.XIAO_RA4M1/Minipirate.ino.hex assets/Minipirate-xiao_ra4m1.hex
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
@@ -77,3 +83,5 @@ jobs:
             assets/Minipirate-nucleo_g431rb.hex
             assets/Minipirate-nucleo_f446re.bin
             assets/Minipirate-nucleo_f446re.hex
+            assets/Minipirate-xiao_ra4m1.bin
+            assets/Minipirate-xiao_ra4m1.hex
