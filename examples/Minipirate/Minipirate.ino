@@ -27,7 +27,9 @@
 #ifdef __AVR__
 #include <EEPROM.h>
 #else
+#ifndef NUM_DIGITAL_PINS
 #define NUM_DIGITAL_PINS 10
+#endif
 #endif
 #ifndef ESP8266
 #include <Servo.h>
