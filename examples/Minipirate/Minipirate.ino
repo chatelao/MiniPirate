@@ -24,18 +24,14 @@
 
 #include <ctype.h>
 #include <Wire.h>
+#include "baseIO.h"
 #ifdef __AVR__
 #include <EEPROM.h>
-#else
-#ifndef NUM_DIGITAL_PINS
-#define NUM_DIGITAL_PINS 10
-#endif
 #endif
 #ifndef ESP8266
 #include <Servo.h>
 #endif
 #include "pins_arduino.h"
-#include "baseIO.h"
 #include "modeBase.h"
 #include "modeI2C.h"
 #include "Strings_PGM_MEM.h"

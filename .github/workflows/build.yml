@@ -31,5 +31,7 @@ jobs:
           arduino-cli compile --fqbn arduino:avr:uno examples/Minipirate/Minipirate.ino
           arduino-cli compile --fqbn rp2040:rp2040:rpipico examples/Minipirate/Minipirate.ino
           arduino-cli compile --fqbn rp2040:rp2040:rpipico2 examples/Minipirate/Minipirate.ino
+          arduino-cli compile --fqbn rp2040:rp2040:seeed_xiao_rp2040 examples/Minipirate/Minipirate.ino
+          arduino-cli compile --fqbn rp2040:rp2040:seeed_xiao_rp2350 examples/Minipirate/Minipirate.ino
           arduino-cli compile --fqbn STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_G431RB examples/Minipirate/Minipirate.ino
           arduino-cli compile --fqbn STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_F446RE examples/Minipirate/Minipirate.ino
