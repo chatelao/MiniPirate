@@ -64,6 +64,7 @@ int freeRam();
 bool checkPinIsOutputMode( int pin_nbre );
 
 
+int adc_resolution = 10;
 float VCC;
 #ifndef ESP8266
 Servo     servo;
@@ -110,6 +111,7 @@ void mpHelp() {
   // Serial.println("b - Show bar graph of analog input");
   SERIAL_PRINTLN_PGM("a - Analog reading");
   SERIAL_PRINTLN_PGM("aa - Continuous analog reading");
+  SERIAL_PRINTLN_PGM("ar - Set ADC resolution (or show if no value)");
   SERIAL_PRINTLN_PGM("g - Set analog (pwm) value");
 
   SERIAL_PRINTLN_PGM("s - Set servo value");
@@ -409,6 +411,28 @@ void loop()
          if (Serial.available()) {
            Serial.read(); // consume the character that stopped the loop
          }
+       } else if (tolower(pollPeek()) == 'r') {
+         pollSerial(); // consume second 'r'
+         pollBlanks();
+         if (isNumberPeek()) {
+           int res = pollInt();
+#if !defined(__AVR__) && !defined(ESP8266)
+           analogReadResolution(res);
+           adc_resolution = res;
+           Serial.println();
+           SERIAL_PRINT_PGM("ADC resolution set to ");
+           Serial.print(adc_resolution);
+           SERIAL_PRINTLN_PGM(" bits");
+#else
+           Serial.println();
+           SERIAL_PRINTLN_PGM("Not supported on this chip");
+#endif
+         } else {
+           Serial.println();
+           SERIAL_PRINT_PGM("ADC resolution: ");
+           Serial.print(adc_resolution);
+           SERIAL_PRINTLN_PGM(" bits");
+         }
        } else {
          Serial.println();
          int pin_nbre = pollPin();
@@ -426,7 +450,7 @@ void loop()
            printPin(pin_nbre);
            printStrDec(": ", a_value);
            SERIAL_PRINT_PGM(" / ");
-           Serial.print(a_value / 1023.0f * VCC);
+           Serial.print(a_value / (float)((1 << adc_resolution) - 1) * VCC);
            SERIAL_PRINTLN_PGM("V");
          } else {
            SERIAL_PRINT_PGM("Pin ");
