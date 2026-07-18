@@ -854,16 +854,17 @@ void printPorts() {
          if(i < 10) Serial.print(' ');
          // http://garretlab.web.fc2.com/en/arduino/inside/arduino/Arduino.h/portModeRegister.html
          int pin_mode = getPinMode(i);
-		 printInOut(pin_mode);
+         printInOut(pin_mode);
          SERIAL_PRINT_PGM(": ");
          printHighLow(value);
 
 #ifdef digitalPinHasPWM
-		 if (digitalPinHasPWM(i)) SERIAL_PRINT_PGM(" PWM");
-		 if (digitalPinToInterrupt(i)>-1){
-			 SERIAL_PRINT_PGM(" IRQ_");
-			 Serial.print(digitalPinToInterrupt(i));
-			 }
+         if (digitalPinHasPWM(i)) SERIAL_PRINT_PGM(" PWM");
+#endif
+         if (digitalPinToInterrupt(i)>-1){
+             SERIAL_PRINT_PGM(" IRQ_");
+             Serial.print(digitalPinToInterrupt(i));
+             }
          Serial.println();
        }
        for(int i = 0; i < NUM_ANALOG_INPUTS; i++) {
@@ -873,17 +874,16 @@ void printPorts() {
          printStrDec("Value on pin A", i);
          if(i < 10) Serial.print(' ');
          int pin_mode = getPinMode(A0+i);
-		 printInOut(pin_mode);
+         printInOut(pin_mode);
          SERIAL_PRINT_PGM(": ");
          printHighLow(value);
          printStrDec(" / ", a_value,3);
-		 SERIAL_PRINT_PGM(" / ");
-		 extern float VCC;
-		 Serial.print(a_value / (float)((1 << adc_resolution) - 1) * VCC);
-		 SERIAL_PRINT_PGM("V");
+         SERIAL_PRINT_PGM(" / ");
+         extern float VCC;
+         Serial.print(a_value / (float)((1 << adc_resolution) - 1) * VCC);
+         SERIAL_PRINT_PGM("V");
      //    printStrDec(" / ", a_value);
          Serial.println();
-#endif // digitalPinHasPWM
        }
 }
 
