@@ -28,6 +28,9 @@
 #ifdef __AVR__
 #include <EEPROM.h>
 #endif
+#if defined(ARDUINO_ARCH_STM32)
+#include <malloc.h>
+#endif
 #ifndef ESP8266
 #include <Servo.h>
 #endif
@@ -50,13 +53,23 @@
 #define INTERNAL_VOLTAGE_REFERENCE 1125300 //   1125300 = 1.1*1023*1000
 #endif
 
+#if defined(ARDUINO_ARCH_STM32)
+uint32_t get_stm32_adc_resolution_macro(int res) {
+  switch(res) {
+    case 6:  return LL_ADC_RESOLUTION_6B;
+    case 8:  return LL_ADC_RESOLUTION_8B;
+    case 10: return LL_ADC_RESOLUTION_10B;
+    case 12: return LL_ADC_RESOLUTION_12B;
+    default: return LL_ADC_RESOLUTION_12B;
+  }
+}
+#endif
+
 int clock_table[ALLPINS];
 
-#ifdef __AVR__
-long readAVR_VCC (long voltage_reference = INTERNAL_VOLTAGE_REFERENCE);
-long readAVRInternalTemp();
+long readMCU_VCC (long voltage_reference = INTERNAL_VOLTAGE_REFERENCE);
+long readMCUInternalTemp();
 int freeRam();
-#endif
 bool checkPinIsOutputMode( int pin_nbre );
 
 
@@ -170,8 +183,8 @@ void mpHelp() {
   SERIAL_PRINTLN_PGM("y - load last config from eeprom");
   SERIAL_PRINTLN_PGM("z - set all ports to input and low");
 
-  SERIAL_PRINTLN_PGM("v - Show AVR VCC reading");
-  SERIAL_PRINTLN_PGM("t - Show AVR internal temperature reading");
+  SERIAL_PRINTLN_PGM("v - Show MCU VCC reading");
+  SERIAL_PRINTLN_PGM("t - Show MCU internal temperature reading");
   SERIAL_PRINTLN_PGM("f - Show free memory");
   SERIAL_PRINTLN_PGM("u - Show system uptime (or clock)");
   SERIAL_PRINTLN_PGM("e - Erase EEPROM");
@@ -215,10 +228,18 @@ void setup()
 
 // Run initial scan
   Serial.println();
-#ifdef __AVR__
-  VCC = readAVR_VCC()/1000.0f;
-  if (VCC < 0.0f) VCC = 5.0f;
+#if defined(__AVR__) || defined(ARDUINO_ARCH_STM32)
+  VCC = readMCU_VCC()/1000.0f;
+#else
+  VCC = -1.0f;
 #endif
+  if (VCC < 0.0f) {
+#if defined(ARDUINO_ARCH_RP2040)
+    VCC = 3.3f;
+#else
+    VCC = 5.0f;
+#endif
+  }
   clearClockTable();
 
   mpHelp();
@@ -281,12 +302,8 @@ void loop()
 	case 't':
 		{
 		Serial.println();
-#ifdef __AVR__
-		int t = readAVRInternalTemp();
-#else
-		int t = -1;
-#endif
-		if (t < 0) 	{
+		long t = readMCUInternalTemp();
+		if (t == -1000000) 	{
 			SERIAL_PRINTLN_PGM("Not supported on this chip");
 			}
 		else {
@@ -298,40 +315,47 @@ void loop()
 	case 'v':
 		{
 		Serial.println();
-#ifdef __AVR__
-		VCC = readAVR_VCC()/1000.0;
-#endif
-		if (VCC < 0.0f) 	{
+		long v_val = readMCU_VCC();
+		if (v_val < 0) 	{
 			SERIAL_PRINTLN_PGM("Not supported on this chip");
-			VCC=5.0f;
 			}
 		else {
+			VCC = v_val / 1000.0f;
 			Serial.print (VCC);
+#if defined(__AVR__)
 			SERIAL_PRINT_PGM(" Volts, based on a nominal internal reference of ");
 			Serial.print(INTERNAL_VOLTAGE_REFERENCE/1000000.0);
 			SERIAL_PRINTLN_PGM(" Volts, +/-10% per chip ");
+#elif defined(ARDUINO_ARCH_STM32)
+			SERIAL_PRINTLN_PGM(" Volts, based on internal factory-calibrated VREFINT reference ");
+#else
+			SERIAL_PRINTLN_PGM(" Volts");
+#endif
 			}
 		}
 		break;	
-#ifdef __AVR__
 	case 'f':
 		Serial.println();
 		SERIAL_PRINT_PGM("RAM ");
 		Serial.print (freeRam());
+#if defined(__AVR__)
 		SERIAL_PRINT_PGM(" of ");
-#ifdef __AVR__
 		Serial.print (RAMEND);
 		SERIAL_PRINTLN_PGM(" bytes free");
 		
 		SERIAL_PRINT_PGM("EEPROM size is ");
 		Serial.print (E2END);
 		SERIAL_PRINT_PGM(" bytes");
-    SERIAL_PRINTLN_PGM("");
+		Serial.println("");
 
 		SERIAL_PRINT_PGM("Flash size is ");
 		Serial.print (FLASHEND);
 		SERIAL_PRINTLN_PGM(" bytes");
+#else
+		SERIAL_PRINTLN_PGM(" bytes free");
+#endif
 		break;    
+#if defined(__AVR__)
 	case 'e':
 
 		Serial.println();
@@ -343,7 +367,6 @@ void loop()
 		SERIAL_PRINTLN_PGM("done");
 
 		break;   
-#endif  // __AVR__
 #endif
 	case 'm':
      {
@@ -772,16 +795,16 @@ void loop()
   }
 }
 
-#ifdef __AVR__
-long readAVR_VCC(long voltage_reference)
+long readMCU_VCC(long voltage_reference)
 	{
+#if defined(__AVR__)
 	// Read 1.1V reference against AVcc
 	// set the reference to Vcc and the measurement to the internal 1.1V reference
 #if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
 	ADMUX = _BV(REFS0) | _BV(MUX4) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
 #elif defined (__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__)
 	ADMUX = _BV(MUX5) | _BV(MUX0);
-#elif defined (__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
+#elif defined (__AVR_ATtiny25__) || defined (__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
 	ADMUX = _BV(MUX3) | _BV(MUX2);
 #else
 	ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
@@ -798,13 +821,20 @@ long readAVR_VCC(long voltage_reference)
 
 	result = voltage_reference / result; // Calculate Vcc (in mV); 1125300 = 1.1*1023*1000
 	return result; // Vcc in millivolts
+#elif defined(ARDUINO_ARCH_STM32) && defined(AVREF)
+	int raw_vref = analogRead(AVREF);
+	return __LL_ADC_CALC_VREFANALOG_VOLTAGE(raw_vref, get_stm32_adc_resolution_macro(adc_resolution));
+#else
+	return -1;
+#endif
 	}
 
 
-long readAVRInternalTemp()
+long readMCUInternalTemp()
 	{
+#if defined(__AVR__)
 #if defined(__AVR_ATmega2560__) || defined(__AVR_ATmega1280__)
-	return -1;
+	return -1000000;
 #endif
 	long result; // Read temperature sensor against 1.1V reference
 	ADMUX = _BV(REFS1) | _BV(REFS0) | _BV(MUX3);
@@ -815,15 +845,35 @@ long readAVRInternalTemp()
 	result |= ADCH<<8;
 	result = (result - 125) * 1075;
 	return result;
+#elif defined(ARDUINO_ARCH_RP2040)
+	float t = analogReadTemp();
+	return (long)(t * 1000.0f);
+#elif defined(ARDUINO_ARCH_STM32) && defined(ATEMP) && defined(AVREF)
+	int raw_vref = analogRead(AVREF);
+	int raw_temp = analogRead(ATEMP);
+	uint32_t vref_mv = __LL_ADC_CALC_VREFANALOG_VOLTAGE(raw_vref, get_stm32_adc_resolution_macro(adc_resolution));
+	int32_t temp_c = __LL_ADC_CALC_TEMPERATURE(vref_mv, raw_temp, get_stm32_adc_resolution_macro(adc_resolution));
+	return (long)(temp_c * 1000);
+#else
+	return -1000000;
+#endif
 	}
 
 int freeRam()
 	{
+#if defined(__AVR__)
 	extern int __heap_start, *__brkval;
 	int v;
 	return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
-	}
+#elif defined(ARDUINO_ARCH_RP2040)
+	return rp2040.getFreeHeap();
+#elif defined(ARDUINO_ARCH_STM32)
+	struct mallinfo mi = mallinfo();
+	return mi.fordblks;
+#else
+	return -1;
 #endif
+	}
 
 //-----------------------------------------------------------------------------------------------------------------
 bool checkPinIsOutputMode( int pin_nbre )
