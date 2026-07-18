@@ -22,6 +22,14 @@
 #else
 #include "WProgram.h"
 #endif
+
+#ifndef NUM_DIGITAL_PINS
+#define NUM_DIGITAL_PINS 30
+#endif
+#ifndef NUM_ANALOG_INPUTS
+#define NUM_ANALOG_INPUTS 4
+#endif
+
 /*
 //manage user terminal input
 unsigned int bpUserNumberPrompt(unsigned int maxBytes, unsigned int maxValue, unsigned int defValue);
