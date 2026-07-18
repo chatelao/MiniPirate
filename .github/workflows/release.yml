@@ -1,0 +1,58 @@
+name: Release Assets
+
+on:
+  release:
+    types: [published, created]
+
+permissions:
+  contents: write
+
+jobs:
+  release-assets:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Install platform and libraries
+        run: |
+          arduino-cli core update-index --additional-urls https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+          arduino-cli core install arduino:avr
+          arduino-cli core install rp2040:rp2040 --additional-urls https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+          arduino-cli lib install Servo
+
+      - name: Link library
+        run: |
+          mkdir -p $HOME/Arduino/libraries
+          ln -s $GITHUB_WORKSPACE $HOME/Arduino/libraries/MiniPirate
+
+      - name: Compile Sketch
+        run: |
+          arduino-cli compile --fqbn arduino:avr:uno -e examples/Minipirate/Minipirate.ino
+          arduino-cli compile --fqbn rp2040:rp2040:rpipico -e examples/Minipirate/Minipirate.ino
+          arduino-cli compile --fqbn rp2040:rp2040:rpipico2 -e examples/Minipirate/Minipirate.ino
+
+      - name: Prepare Release Assets
+        run: |
+          mkdir -p assets
+          cp examples/Minipirate/build/arduino.avr.uno/Minipirate.ino.hex assets/Minipirate-uno.hex
+          cp examples/Minipirate/build/arduino.avr.uno/Minipirate.ino.with_bootloader.hex assets/Minipirate-uno-with_bootloader.hex
+          cp examples/Minipirate/build/rp2040.rp2040.rpipico/Minipirate.ino.bin assets/Minipirate-rpipico.bin
+          cp examples/Minipirate/build/rp2040.rp2040.rpipico/Minipirate.ino.uf2 assets/Minipirate-rpipico.uf2
+          cp examples/Minipirate/build/rp2040.rp2040.rpipico2/Minipirate.ino.bin assets/Minipirate-rpipico2.bin
+          cp examples/Minipirate/build/rp2040.rp2040.rpipico2/Minipirate.ino.uf2 assets/Minipirate-rpipico2.uf2
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            assets/Minipirate-uno.hex
+            assets/Minipirate-uno-with_bootloader.hex
+            assets/Minipirate-rpipico.bin
+            assets/Minipirate-rpipico.uf2
+            assets/Minipirate-rpipico2.bin
+            assets/Minipirate-rpipico2.uf2
