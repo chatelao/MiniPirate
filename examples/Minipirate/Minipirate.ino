@@ -106,6 +106,7 @@ void mpHelp() {
   SERIAL_PRINTLN_PGM("c - Set port to clock high and low with given delay");
 
   // Serial.println("b - Show bar graph of analog input");
+  SERIAL_PRINTLN_PGM("a - Analog reading");
   SERIAL_PRINTLN_PGM("g - Set analog (pwm) value");
 
   SERIAL_PRINTLN_PGM("s - Set servo value");
@@ -376,6 +377,38 @@ void loop()
       }
      }
      break;
+    case 'a':
+     {
+       Serial.println();
+       int pin_nbre = pollPin();
+       int analog_channel = -1;
+       if (pin_nbre >= A0 && pin_nbre < A0 + NUM_ANALOG_INPUTS) {
+         analog_channel = pin_nbre - A0;
+       } else if (pin_nbre >= 0 && pin_nbre < NUM_ANALOG_INPUTS) {
+         analog_channel = pin_nbre;
+         pin_nbre = A0 + pin_nbre;
+       }
+
+       if (analog_channel >= 0) {
+         int a_value = analogRead(analog_channel);
+         SERIAL_PRINT_PGM("Analog value on pin ");
+         printPin(pin_nbre);
+         printStrDec(": ", a_value);
+         SERIAL_PRINT_PGM(" / ");
+         Serial.print(a_value / 1023.0f * VCC);
+         SERIAL_PRINTLN_PGM("V");
+       } else {
+         SERIAL_PRINT_PGM("Pin ");
+         if (pin_nbre >= 0) {
+           printPin(pin_nbre);
+         } else {
+           SERIAL_PRINT_PGM("invalid");
+         }
+         SERIAL_PRINTLN_PGM(" does not support analog input");
+       }
+     }
+    break;
+
     case 'g':
      {
        int pin_nbre = pollPin();
