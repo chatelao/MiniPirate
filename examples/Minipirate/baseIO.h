@@ -176,6 +176,8 @@ void printPin(int pin);
 void printPorts();
 void printPortsQuick();
 
+extern int adc_resolution;
+
 inline int getPinMode( int i )
 	{
 	return *portModeRegister(digitalPinToPort(i)) & digitalPinToBitMask(i);

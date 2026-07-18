@@ -879,7 +879,7 @@ void printPorts() {
          printStrDec(" / ", a_value,3);
 		 SERIAL_PRINT_PGM(" / ");
 		 extern float VCC;
-		 Serial.print(a_value / 1023.0f * VCC);
+		 Serial.print(a_value / (float)((1 << adc_resolution) - 1) * VCC);
 		 SERIAL_PRINT_PGM("V");
      //    printStrDec(" / ", a_value);
          Serial.println();
