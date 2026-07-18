@@ -95,6 +95,242 @@ char const * printMode () {
   return "";
 }
 
+char getHelpSubcommand() {
+  unsigned long start = millis();
+  // Wait up to 50ms for any character to be available
+  while (!Serial.available() && (millis() - start < 50)) {
+    delay(1);
+  }
+  if (!Serial.available()) {
+    return -1;
+  }
+
+  // Skip leading spaces, but also handle newline/carriage return
+  while (Serial.available()) {
+    char p = Serial.peek();
+    if (p == ' ') {
+      Serial.read(); // consume space
+      // wait a bit for the next character if buffer becomes empty
+      start = millis();
+      while (!Serial.available() && (millis() - start < 50)) {
+        delay(1);
+      }
+    } else if (p == '\r' || p == '\n') {
+      return -1;
+    } else {
+      break;
+    }
+  }
+
+  if (!Serial.available()) {
+    return -1;
+  }
+
+  // Now read the subcommand character
+  char sub = tolower(Serial.read());
+  Serial.print(sub); // echo it back
+
+  // Wait, what if it's a multi-character subcommand like 'a' (could be 'aa' or 'ar') or 'g' (could be 'gg')?
+  if (sub == 'a' || sub == 'g') {
+    start = millis();
+    while (!Serial.available() && (millis() - start < 30)) {
+      delay(1);
+    }
+    if (Serial.available()) {
+      char next = tolower(Serial.peek());
+      if ((sub == 'a' && (next == 'a' || next == 'r')) || (sub == 'g' && next == 'g')) {
+        Serial.read(); // consume it
+        Serial.print(next);
+        if (sub == 'a' && next == 'a') return '2'; // 'aa'
+        if (sub == 'a' && next == 'r') return '3'; // 'ar'
+        if (sub == 'g' && next == 'g') return '4'; // 'gg'
+      }
+    }
+  }
+  return sub;
+}
+
+void mpHelpCommand(char cmd) {
+  Serial.println();
+  switch (cmd) {
+    case 'p':
+      SERIAL_PRINTLN_PGM("Help for 'p': Show all port values & directions");
+      SERIAL_PRINTLN_PGM("  Prints a detailed status of all digital and analog pins.");
+      SERIAL_PRINTLN_PGM("  Includes pin number, direction (INPUT/OUTPUT), state (HIGH/LOW),");
+      SERIAL_PRINTLN_PGM("  PWM capability (if applicable), and active interrupt number.");
+      SERIAL_PRINTLN_PGM("  For analog pins, displays raw ADC counts and calculated voltage.");
+      break;
+    case 'q':
+      SERIAL_PRINTLN_PGM("Help for 'q': Show port values & directions (quick)");
+      SERIAL_PRINTLN_PGM("  Displays all port directions and states in a compact matrix.");
+      SERIAL_PRINTLN_PGM("  D0-D7 are grouped, as are other digital and analog pins.");
+      SERIAL_PRINTLN_PGM("  Format: '<' for INPUT, '>' for OUTPUT, followed by 1 or 0.");
+      break;
+    case '<':
+      SERIAL_PRINTLN_PGM("Help for '<': Set port as INPUT");
+      SERIAL_PRINTLN_PGM("  Syntax: < <pin>");
+      SERIAL_PRINTLN_PGM("  Configures the specified pin as an INPUT pin.");
+      SERIAL_PRINTLN_PGM("  Example: < 3  (sets digital pin 3 to INPUT mode)");
+      break;
+    case '>':
+      SERIAL_PRINTLN_PGM("Help for '>': Set port as OUTPUT");
+      SERIAL_PRINTLN_PGM("  Syntax: > <pin>");
+      SERIAL_PRINTLN_PGM("  Configures the specified pin as an OUTPUT pin.");
+      SERIAL_PRINTLN_PGM("  Example: > 4  (sets digital pin 4 to OUTPUT mode)");
+      break;
+    case '/':
+      SERIAL_PRINTLN_PGM("Help for '/': Set port to HIGH (clock up)");
+      SERIAL_PRINTLN_PGM("  Syntax: / <pin>");
+      SERIAL_PRINTLN_PGM("  Sets the specified pin to HIGH.");
+      SERIAL_PRINTLN_PGM("  If the pin was not already an OUTPUT, it is changed to OUTPUT.");
+      SERIAL_PRINTLN_PGM("  Example: / 5  (sets digital pin 5 to HIGH)");
+      break;
+    case '\\':
+      SERIAL_PRINTLN_PGM("Help for '\\': Set port to LOW (clock down)");
+      SERIAL_PRINTLN_PGM("  Syntax: \\ <pin>");
+      SERIAL_PRINTLN_PGM("  Sets the specified pin to LOW.");
+      SERIAL_PRINTLN_PGM("  If the pin was not already an OUTPUT, it is changed to OUTPUT.");
+      SERIAL_PRINTLN_PGM("  Example: \\ 6  (sets digital pin 6 to LOW)");
+      break;
+    case '^':
+      SERIAL_PRINTLN_PGM("Help for '^': Set port LOW-HIGH-LOW (one clock)");
+      SERIAL_PRINTLN_PGM("  Syntax: ^ <pin>");
+      SERIAL_PRINTLN_PGM("  Generates a single short clock pulse on the specified pin.");
+      SERIAL_PRINTLN_PGM("  It sets the pin to LOW, then HIGH, then back to LOW.");
+      SERIAL_PRINTLN_PGM("  Example: ^ 7  (pulses digital pin 7)");
+      break;
+    case '$':
+      SERIAL_PRINTLN_PGM("Help for '$': Do a pin sweep");
+      SERIAL_PRINTLN_PGM("  Sweeps through all digital pins sequentially.");
+      SERIAL_PRINTLN_PGM("  Each pin is temporarily configured as an OUTPUT, its digital state");
+      SERIAL_PRINTLN_PGM("  is toggled for 250ms, and then restored to its original state.");
+      break;
+    case 'c':
+      SERIAL_PRINTLN_PGM("Help for 'c': Continuous clock on port");
+      SERIAL_PRINTLN_PGM("  Syntax: c <pin> [delay]");
+      SERIAL_PRINTLN_PGM("  Toggles the pin between HIGH and LOW at the specified delay (ms).");
+      SERIAL_PRINTLN_PGM("  If [delay] is omitted or 0, continuous clocking on <pin> is stopped.");
+      SERIAL_PRINTLN_PGM("  Also displays a summary of all pins currently being clocked.");
+      SERIAL_PRINTLN_PGM("  Example: c 8 500  (clocks digital pin 8 every 500ms)");
+      break;
+    case 'a':
+      SERIAL_PRINTLN_PGM("Help for 'a': Analog reading");
+      SERIAL_PRINTLN_PGM("  Syntax: a <pin>");
+      SERIAL_PRINTLN_PGM("  Reads the analog voltage and raw ADC counts on the specified pin.");
+      SERIAL_PRINTLN_PGM("  Supports 'a0'-'a5' or simple channel numbers '0'-'5'.");
+      SERIAL_PRINTLN_PGM("  Example: a a0  (reads analog input channel 0)");
+      break;
+    case '2':
+      SERIAL_PRINTLN_PGM("Help for 'aa': Continuous analog reading");
+      SERIAL_PRINTLN_PGM("  Syntax: aa [interval]");
+      SERIAL_PRINTLN_PGM("  Repeatedly reads and displays all analog input pins.");
+      SERIAL_PRINTLN_PGM("  An optional interval (in milliseconds) can be specified.");
+      SERIAL_PRINTLN_PGM("  Press any key to stop the continuous reading loop.");
+      SERIAL_PRINTLN_PGM("  Example: aa 100  (reads all analog channels every 100ms)");
+      break;
+    case '3':
+      SERIAL_PRINTLN_PGM("Help for 'ar': Set ADC resolution");
+      SERIAL_PRINTLN_PGM("  Syntax: ar [resolution]");
+      SERIAL_PRINTLN_PGM("  Configures the Analog-to-Digital Converter resolution in bits.");
+      SERIAL_PRINTLN_PGM("  If [resolution] is omitted, displays the current resolution.");
+      SERIAL_PRINTLN_PGM("  Note: Only supported on certain non-AVR platforms (e.g. RP2040, STM32).");
+      SERIAL_PRINTLN_PGM("  Example: ar 12  (sets ADC resolution to 12-bit)");
+      break;
+    case 'g':
+      SERIAL_PRINTLN_PGM("Help for 'g': Set analog (PWM) value");
+      SERIAL_PRINTLN_PGM("  Syntax: g <pin> <value>");
+      SERIAL_PRINTLN_PGM("  Applies a PWM duty cycle value (0 to 255) to the specified pin.");
+      SERIAL_PRINTLN_PGM("  Configures the pin to OUTPUT and stops any clock on it.");
+      SERIAL_PRINTLN_PGM("  Example: g 9 128  (sets pin 9 to ~50% duty cycle PWM)");
+      break;
+    case '4':
+      SERIAL_PRINTLN_PGM("Help for 'gg': Change analog (PWM) frequency");
+      SERIAL_PRINTLN_PGM("  Syntax: gg <frequency>");
+      SERIAL_PRINTLN_PGM("  Changes the base PWM frequency in Hz for PWM-enabled pins.");
+      SERIAL_PRINTLN_PGM("  Note: Only supported on certain platforms (e.g. ESP8266, RP2040).");
+      SERIAL_PRINTLN_PGM("  Example: gg 1000  (sets PWM frequency to 1 kHz)");
+      break;
+    case 's':
+      SERIAL_PRINTLN_PGM("Help for 's': Set servo value");
+      SERIAL_PRINTLN_PGM("  Syntax: s <pin> <value>");
+      SERIAL_PRINTLN_PGM("  Attaches a servo motor to the specified pin and sets its position/angle");
+      SERIAL_PRINTLN_PGM("  (typically 0 to 180 degrees). Cancels any active clock on the pin.");
+      SERIAL_PRINTLN_PGM("  Example: s 10 90  (moves servo on pin 10 to 90 degrees)");
+      break;
+    case 'i':
+      SERIAL_PRINTLN_PGM("Help for 'i': Scan I2C device addresses");
+      SERIAL_PRINTLN_PGM("  Initializes the I2C interface and scans for connected I2C devices.");
+      SERIAL_PRINTLN_PGM("  Lists the hex addresses of all responsive devices found on the bus.");
+      break;
+    case '#':
+      SERIAL_PRINTLN_PGM("Help for '#': Set active I2C device address");
+      SERIAL_PRINTLN_PGM("  Syntax: # <address>");
+      SERIAL_PRINTLN_PGM("  Sets the specified address as the active target for subsequent I2C operations.");
+      SERIAL_PRINTLN_PGM("  Example: # 0x50  (sets active target to I2C address 0x50)");
+      break;
+    case 'r':
+      SERIAL_PRINTLN_PGM("Help for 'r': Read I2C bytes");
+      SERIAL_PRINTLN_PGM("  Syntax: r <n>");
+      SERIAL_PRINTLN_PGM("  Reads <n> bytes of data from the active I2C device and prints them.");
+      SERIAL_PRINTLN_PGM("  Example: r 4  (reads 4 bytes from active I2C device)");
+      break;
+    case 'w':
+      SERIAL_PRINTLN_PGM("Help for 'w': Write I2C bytes");
+      SERIAL_PRINTLN_PGM("  Syntax: w <byte1> [byte2] ... [byteN]");
+      SERIAL_PRINTLN_PGM("  Writes the specified sequence of space-separated bytes to the active I2C device.");
+      SERIAL_PRINTLN_PGM("  Example: w 0x00 0xAB  (writes bytes 0x00 and 0xAB to active I2C device)");
+      break;
+    case 'x':
+      SERIAL_PRINTLN_PGM("Help for 'x': Save configuration to EEPROM");
+      SERIAL_PRINTLN_PGM("  Saves the current state of all pin modes, digital values, and active");
+      SERIAL_PRINTLN_PGM("  clocks (clock table) to the microcontroller's EEPROM.");
+      SERIAL_PRINTLN_PGM("  This configuration will persist across system reboots.");
+      break;
+    case 'y':
+      SERIAL_PRINTLN_PGM("Help for 'y': Load configuration from EEPROM");
+      SERIAL_PRINTLN_PGM("  Loads and applies the saved configuration (pin directions, values,");
+      SERIAL_PRINTLN_PGM("  and clock frequencies) from EEPROM. Automatically displays the new port states.");
+      break;
+    case 'z':
+      SERIAL_PRINTLN_PGM("Help for 'z': Reset all ports");
+      SERIAL_PRINTLN_PGM("  Resets all digital and analog pins to INPUT mode and writes a LOW value");
+      SERIAL_PRINTLN_PGM("  to them. Stops all active continuous clocks.");
+      break;
+    case 'v':
+      SERIAL_PRINTLN_PGM("Help for 'v': Show MCU supply voltage (VCC)");
+      SERIAL_PRINTLN_PGM("  Measures and displays the current microcontroller supply voltage.");
+      SERIAL_PRINTLN_PGM("  Useful for checking power supply stability or battery charge levels.");
+      break;
+    case 't':
+      SERIAL_PRINTLN_PGM("Help for 't': Show MCU internal temperature");
+      SERIAL_PRINTLN_PGM("  Reads the chip's internal temperature sensor (if supported by hardware)");
+      SERIAL_PRINTLN_PGM("  and displays the result in degrees Celsius.");
+      break;
+    case 'f':
+      SERIAL_PRINTLN_PGM("Help for 'f': Show free memory");
+      SERIAL_PRINTLN_PGM("  Measures and displays the amount of free dynamic RAM (SRAM) currently");
+      SERIAL_PRINTLN_PGM("  available, along with system information such as flash/EEPROM capacity.");
+      break;
+    case 'u':
+      SERIAL_PRINTLN_PGM("Help for 'u': Show system uptime");
+      SERIAL_PRINTLN_PGM("  Displays the total elapsed time in seconds since the microcontroller");
+      SERIAL_PRINTLN_PGM("  was last powered on or reset.");
+      break;
+    case 'e':
+      SERIAL_PRINTLN_PGM("Help for 'e': Erase EEPROM");
+      SERIAL_PRINTLN_PGM("  Overwrites all cells of the internal EEPROM with 0.");
+      SERIAL_PRINTLN_PGM("  Note: This operation can take a few moments depending on EEPROM size.");
+      break;
+    case '*':
+      SERIAL_PRINTLN_PGM("Help for '*': Reboot");
+      SERIAL_PRINTLN_PGM("  Performs a software reset of the microcontroller, restarting MiniPirate.");
+      break;
+    default:
+      SERIAL_PRINTLN_PGM("Unknown subcommand. Type 'h' to see the list of supported commands.");
+      break;
+  }
+}
+
 void mpHelp() {
 
   SERIAL_PRINTLN_PGM("LIST OF SUPPORTED COMMANDS");
@@ -278,8 +514,15 @@ void loop()
   switch (c) {
     case '?':
     case 'h':
-       Serial.println();
-       mpHelp();
+       {
+         char sub = getHelpSubcommand();
+         if (sub == -1) {
+           Serial.println();
+           mpHelp();
+         } else {
+           mpHelpCommand(sub);
+         }
+       }
     break;
 	case '*':
 		{
