@@ -44,7 +44,11 @@
 
 #define BAUD_RATE 57600
 
+#if defined(A0) && (A0 > 0)
 #define ALLPINS (NUM_ANALOG_INPUTS+A0)
+#else
+#define ALLPINS NUM_DIGITAL_PINS
+#endif
 
 // multipled by 1023 since that's the resolution of the ADC
 #if defined(__AVR_ATmega8__)
