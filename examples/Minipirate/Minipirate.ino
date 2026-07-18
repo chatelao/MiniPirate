@@ -108,6 +108,7 @@ void mpHelp() {
   // Serial.println("b - Show bar graph of analog input");
   SERIAL_PRINTLN_PGM("a - Analog reading");
   SERIAL_PRINTLN_PGM("g - Set analog (pwm) value");
+  SERIAL_PRINTLN_PGM("gg - Set analog (pwm) frequency / divisor");
 
   SERIAL_PRINTLN_PGM("s - Set servo value");
 
@@ -411,31 +412,152 @@ void loop()
 
     case 'g':
      {
-       int pin_nbre = pollPin();
-       pollBlanks();
-	   checkPinIsOutputMode(pin_nbre);
-	   
-       if(pin_nbre >= 0 && isNumberPeek()) {
-		   clock_table[pin_nbre] = 0;
-#ifdef digitalPinHasPWM
-		   if (digitalPinHasPWM(pin_nbre))  {
-			   int value = pollInt();
-				analogWrite(pin_nbre, value);
-				Serial.println();
-				SERIAL_PRINT_PGM("New analog value on pin ");
-				printPin(pin_nbre);
-				printStrDec(": ", value);
-				Serial.println();
-		   } else
+       bool is_gg = false;
+       if (tolower(pollPeek()) == 'g') {
+         pollSerial(); // consume the second 'g'
+         is_gg = true;
+       }
+
+       if (is_gg) {
+         int pin_nbre = pollPin();
+         pollBlanks();
+         if (pin_nbre >= 0) {
+           checkPinIsOutputMode(pin_nbre);
+#ifdef __AVR__
+           uint8_t timer = digitalPinToTimer(pin_nbre);
+           if (timer == NOT_ON_TIMER) {
+             Serial.println();
+             SERIAL_PRINT_PGM("Pin ");
+             printPin(pin_nbre);
+             SERIAL_PRINTLN_PGM(" does not support PWM output");
+           } else {
+             int timer_num = -1;
+             if (timer == TIMER0A || timer == TIMER0B) {
+               timer_num = 0;
+             } else if (timer == TIMER1A || timer == TIMER1B) {
+               timer_num = 1;
+             } else if (timer == TIMER2A || timer == TIMER2B) {
+               timer_num = 2;
+             }
+
+             if (timer_num == -1) {
+               Serial.println();
+               SERIAL_PRINT_PGM("Pin ");
+               printPin(pin_nbre);
+               SERIAL_PRINTLN_PGM(" uses an unsupported timer for frequency change");
+             } else {
+               if (isNumberPeek()) {
+                 int divisor = pollInt();
+                 int cs_bits = 0;
+                 bool valid = false;
+
+                 if (timer_num == 0 || timer_num == 1) {
+                   if (divisor == 1) { cs_bits = 1; valid = true; }
+                   else if (divisor == 8) { cs_bits = 2; valid = true; }
+                   else if (divisor == 64) { cs_bits = 3; valid = true; }
+                   else if (divisor == 256) { cs_bits = 4; valid = true; }
+                   else if (divisor == 1024) { cs_bits = 5; valid = true; }
+                 } else if (timer_num == 2) {
+                   if (divisor == 1) { cs_bits = 1; valid = true; }
+                   else if (divisor == 8) { cs_bits = 2; valid = true; }
+                   else if (divisor == 32) { cs_bits = 3; valid = true; }
+                   else if (divisor == 64) { cs_bits = 4; valid = true; }
+                   else if (divisor == 128) { cs_bits = 5; valid = true; }
+                   else if (divisor == 256) { cs_bits = 6; valid = true; }
+                   else if (divisor == 1024) { cs_bits = 7; valid = true; }
+                 }
+
+                 if (valid) {
+                   if (timer_num == 0) {
+                     TCCR0B = (TCCR0B & 0b11111000) | cs_bits;
+                     Serial.println();
+                     SERIAL_PRINTLN_PGM("Warning: Changing Timer 0 divisor will affect system millis() and delay()!");
+                   } else if (timer_num == 1) {
+                     TCCR1B = (TCCR1B & 0b11111000) | cs_bits;
+                   } else if (timer_num == 2) {
+                     TCCR2B = (TCCR2B & 0b11111000) | cs_bits;
+                   }
+                   Serial.println();
+                   SERIAL_PRINT_PGM("PWM divisor on pin ");
+                   printPin(pin_nbre);
+                   printStrDec(" set to ", divisor);
+                   Serial.println();
+                 } else {
+                   Serial.println();
+                   SERIAL_PRINTLN_PGM("Invalid divisor value.");
+                   if (timer_num == 0 || timer_num == 1) {
+                     SERIAL_PRINTLN_PGM("Valid divisors for this timer: 1, 8, 64, 256, 1024");
+                   } else {
+                     SERIAL_PRINTLN_PGM("Valid divisors for this timer: 1, 8, 32, 64, 128, 256, 1024");
+                   }
+                 }
+               } else {
+                 int cs_bits = 0;
+                 int divisor = 0;
+                 if (timer_num == 0) {
+                   cs_bits = TCCR0B & 0x07;
+                   if (cs_bits == 1) divisor = 1;
+                   else if (cs_bits == 2) divisor = 8;
+                   else if (cs_bits == 3) divisor = 64;
+                   else if (cs_bits == 4) divisor = 256;
+                   else if (cs_bits == 5) divisor = 1024;
+                 } else if (timer_num == 1) {
+                   cs_bits = TCCR1B & 0x07;
+                   if (cs_bits == 1) divisor = 1;
+                   else if (cs_bits == 2) divisor = 8;
+                   else if (cs_bits == 3) divisor = 64;
+                   else if (cs_bits == 4) divisor = 256;
+                   else if (cs_bits == 5) divisor = 1024;
+                 } else if (timer_num == 2) {
+                   cs_bits = TCCR2B & 0x07;
+                   if (cs_bits == 1) divisor = 1;
+                   else if (cs_bits == 2) divisor = 8;
+                   else if (cs_bits == 3) divisor = 32;
+                   else if (cs_bits == 4) divisor = 64;
+                   else if (cs_bits == 5) divisor = 128;
+                   else if (cs_bits == 6) divisor = 256;
+                   else if (cs_bits == 7) divisor = 1024;
+                 }
+                 Serial.println();
+                 SERIAL_PRINT_PGM("Current PWM divisor on pin ");
+                 printPin(pin_nbre);
+                 printStrDec(": ", divisor);
+                 Serial.println();
+               }
+             }
+           }
+#else
+           Serial.println();
+           SERIAL_PRINTLN_PGM("PWM frequency adjustment not supported on this platform");
 #endif
-{
-			   Serial.println();
-			   SERIAL_PRINT_PGM("Pin ");
-			   printPin(pin_nbre);
-			   SERIAL_PRINT_PGM(" does not support PWM output");
-			   Serial.println();
-				}
-		   }
+         }
+       } else {
+         int pin_nbre = pollPin();
+         pollBlanks();
+         checkPinIsOutputMode(pin_nbre);
+
+         if(pin_nbre >= 0 && isNumberPeek()) {
+             clock_table[pin_nbre] = 0;
+#ifdef digitalPinHasPWM
+             if (digitalPinHasPWM(pin_nbre))  {
+                 int value = pollInt();
+                  analogWrite(pin_nbre, value);
+                  Serial.println();
+                  SERIAL_PRINT_PGM("New analog value on pin ");
+                  printPin(pin_nbre);
+                  printStrDec(": ", value);
+                  Serial.println();
+             } else
+#endif
+             {
+                 Serial.println();
+                 SERIAL_PRINT_PGM("Pin ");
+                 printPin(pin_nbre);
+                 SERIAL_PRINT_PGM(" does not support PWM output");
+                 Serial.println();
+             }
+         }
+       }
      }
     break;
 
