@@ -17,8 +17,7 @@
 #include <Arduino.h>
 #include "baseIO.h"
 #include "modeI2C.h"
-// #include <Wire.h>
-#include "../Wire/Wire.h" // Hack: See http://forum.arduino.cc/index.php/topic,42818.0.html#5
+#include <Wire.h>
 
 
 void ModeI2C::setup() {
