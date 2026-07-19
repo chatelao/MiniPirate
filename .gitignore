@@ -1,3 +1,8 @@
 # Arduino CLI build artifacts
 examples/Minipirate/build/
 arduino-cli
+
+# PlatformIO build artifacts
+.pio/
+.pioenvs/
+.piolibdeps/
