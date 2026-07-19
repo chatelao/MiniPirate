@@ -1,0 +1,42 @@
+Verbosity level can be increased via `-v, -vv, or -vvv` option
+Collected 1 tests
+
+Processing test_baseIO in native environment
+--------------------------------------------------------------------------------
+Building...
+test/test_baseIO/test_baseIO.cpp:1:10: fatal error: unity.h: No such file or directory
+
+***************************************************************
+* Looking for unity.h dependency? Check our library registry!
+*
+* CLI  > platformio lib search "header:unity.h"
+* Web  > https://registry.platformio.org/search?q=header:unity.h
+*
+***************************************************************
+
+    1 | #include <unity.h>
+      |          ^~~~~~~~~
+compilation terminated.
+*** [.pio/build/native/test/test_baseIO/test_baseIO.o] Error 1
+.pio/build/native/unity_config/unity_config.c:1:10: fatal error: unity_config.h: No such file or directory
+
+**********************************************************************
+* Looking for unity_config.h dependency? Check our library registry!
+*
+* CLI  > platformio lib search "header:unity_config.h"
+* Web  > https://registry.platformio.org/search?q=header:unity_config.h
+*
+**********************************************************************
+
+    1 | #include <unity_config.h>
+      |          ^~~~~~~~~~~~~~~~
+compilation terminated.
+*** [.pio/build/native/lib35e/.pio/build/native/unity_config/unity_config.o] Error 1
+Building stage has failed, see errors above. Use `pio test -vvv` option to enable verbose output.
+---------------- native:test_baseIO [ERRORED] Took 0.71 seconds ----------------
+
+=================================== SUMMARY ===================================
+Environment    Test         Status    Duration
+-------------  -----------  --------  ------------
+native         test_baseIO  ERRORED   00:00:00.713
+================== 1 test cases: 0 succeeded in 00:00:00.713 ==================

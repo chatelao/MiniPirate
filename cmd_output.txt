@@ -1,0 +1,79 @@
+Checking path: .pio/build/native/unity_config/unity_config.c
+  Exists! Size: 1207
+  Content:
+#include <unity_config.h>
+
+#if !defined(UNITY_WEAK_ATTRIBUTE) && !defined(UNITY_WEAK_PRAGMA)
+#   if defined(__GNUC__) || defined(__ghs__) /* __GNUC__ includes clang */
+#       if !(defined(__WIN32__) && defined(__clang__)) && !defined(__TMS470__)
+#           define UNITY_WEAK_ATTRIBUTE __attribute__((weak))
+#       endif
+#   endif
+#endif
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+#ifdef UNITY_WEAK_ATTRIBUTE
+    UNITY_WEAK_ATTRIBUTE void setUp(void) { }
+    UNITY_WEAK_ATTRIBUTE void tearDown(void) { }
+    UNITY_WEAK_ATTRIBUTE void suiteSetUp(void) { }
+    UNITY_WEAK_ATTRIBUTE int suiteTearDown(int num_failures) { return num_failures; }
+#elif defined(UNITY_WEAK_PRAGMA)
+    #pragma weak setUp
+    void setUp(void) { }
+    #pragma weak tearDown
+    void tearDown(void) { }
+    #pragma weak suiteSetUp
+    void suiteSetUp(void) { }
+    #pragma weak suiteTearDown
+    int suiteTearDown(int num_failures) { return num_failures; }
+#endif
+
+#ifdef __cplusplus
+}
+#endif /* extern "C" */
+
+
+#include <stdio.h>
+void unityOutputStart(unsigned long baudrate) { (void) baudrate; }
+void unityOutputChar(unsigned int c) { putchar(c); }
+void unityOutputFlush(void) { fflush(stdout); }
+void unityOutputComplete(void) { }
+
+Checking path: .pio/build/native/unity_config/unity_config.h
+  Exists! Size: 618
+  Content:
+#ifndef UNITY_CONFIG_H
+#define UNITY_CONFIG_H
+
+#ifndef NULL
+#ifndef __cplusplus
+#define NULL (void*)0
+#else
+#define NULL 0
+#endif
+#endif
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+void unityOutputStart(unsigned long);
+void unityOutputChar(unsigned int);
+void unityOutputFlush(void);
+void unityOutputComplete(void);
+
+#define UNITY_OUTPUT_START()    unityOutputStart((unsigned long) 115200)
+#define UNITY_OUTPUT_CHAR(c)    unityOutputChar(c)
+#define UNITY_OUTPUT_FLUSH()    unityOutputFlush()
+#define UNITY_OUTPUT_COMPLETE() unityOutputComplete()
+
+#ifdef __cplusplus
+}
+#endif /* extern "C" */
+
+#endif /* UNITY_CONFIG_H */
