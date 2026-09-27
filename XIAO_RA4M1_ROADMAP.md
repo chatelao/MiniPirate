@@ -120,7 +120,7 @@ Automate binary export and asset uploading when releasing new MiniPirate version
 
 ## 6. Verification Checklist
 
-- [ ] Local build test passes using `arduino-cli compile --fqbn Seeeduino:renesas_uno:XIAO_RA4M1 examples/Minipirate/Minipirate.ino`.
+- [x] Local build test passes using `arduino-cli compile --fqbn Seeeduino:renesas_uno:XIAO_RA4M1 examples/Minipirate/Minipirate.ino`.
 - [ ] Documentation updated in `README.md` board support matrix.
 - [ ] `.github/workflows/build.yml` compiles XIAO RA4M1 successfully on CI.
 - [ ] `.github/workflows/release.yml` produces `Minipirate-xiao_ra4m1.bin` and/or `Minipirate-xiao_ra4m1.hex` assets.
