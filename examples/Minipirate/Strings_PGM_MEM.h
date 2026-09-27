@@ -10,9 +10,13 @@
 #include "WProgram.h"
 #endif
 
-#ifndef ESP8266
+#if defined(__has_include) && __has_include(<avr/pgmspace.h>)
 #include <avr/pgmspace.h>
+#elif defined(__has_include) && __has_include(<pgmspace.h>)
+#include <pgmspace.h>
+#endif
 
+#ifndef ESP8266
 void printProgramString (const char * str PROGMEM, Print & target);
 
 #define SERIAL_PRINT_PGM(a) { static const char str[] PROGMEM = a; printProgramString (str,Serial);};
