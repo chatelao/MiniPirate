@@ -68,7 +68,7 @@ For extended help on any specific command, type `h <command>` (for example, `h p
 | `x` | Save current pin directions, states, and clocks to EEPROM | `Saved state to EEPROM` |
 | `y` | Load and restore configuration from EEPROM | `Loaded state from EEPROM` |
 
-### GPIO & Analog Commands
+### Digital GPIO Commands
 
 | Command | Description | Example |
 |---|---|---|
@@ -82,6 +82,12 @@ For extended help on any specific command, type `h <command>` (for example, `h p
 | `$` | Sequential pin sweep (flips pin state for 250ms then restores) | `$` |
 | `c [pin] [ms]`| Start automated clock generator (toggles pin state every `ms`) | `c 8 100` (clocks pin 8 with 100ms interval) |
 | `c [pin]` | Stop automated clock generator on specified pin | `c 8` |
+| `z` | Global Reset: Set all ports to INPUT mode and write LOW | `z` |
+
+### Analog & PWM Commands
+
+| Command | Description | Example |
+|---|---|---|
 | `a [pin]` | Read analog value and calculate voltage | `a a0` or `a 0` (reads from analog pin A0) |
 | `aa [ms]` | Start continuous analog readings of all analog pins | `aa 100` (reads all analog inputs every 100ms) |
 | `ar [bits]`| Set ADC reading resolution | `ar 12` (sets ADC resolution to 12 bits) |
@@ -89,7 +95,6 @@ For extended help on any specific command, type `h <command>` (for example, `h p
 | `g [pin] [val]`| Set analog / PWM output value (0-255) | `g 9 128` (sets PWM on pin 9 to 50% duty cycle)|
 | `gg [freq]`| Set analog / PWM output frequency in Hz (RP2040/ESP8266) | `gg 1000` (sets PWM frequency to 1000Hz) |
 | `s [pin] [deg]`| Set servo position angle (0-180) | `s 10 90` (sets servo on pin 10 to 90 degrees)|
-| `z` | Global Reset: Set all ports to INPUT mode and write LOW | `z` |
 
 ### I2C Commands
 
