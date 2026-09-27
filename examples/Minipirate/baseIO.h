@@ -24,10 +24,19 @@
 #endif
 
 #ifndef NUM_DIGITAL_PINS
+#if defined(ARDUINO_XIAO_RA4M1) || defined(ARDUINO_SEEED_XIAO_RP2040) || defined(ARDUINO_SEEED_XIAO_RP2350)
+#define NUM_DIGITAL_PINS 10
+#else
 #define NUM_DIGITAL_PINS 30
 #endif
+#endif
+
 #ifndef NUM_ANALOG_INPUTS
+#if defined(ARDUINO_XIAO_RA4M1) || defined(ARDUINO_SEEED_XIAO_RP2040) || defined(ARDUINO_SEEED_XIAO_RP2350)
+#define NUM_ANALOG_INPUTS 6
+#else
 #define NUM_ANALOG_INPUTS 4
+#endif
 #endif
 
 #ifndef digitalPinHasPWM
