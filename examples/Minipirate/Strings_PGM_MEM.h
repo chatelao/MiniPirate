@@ -11,7 +11,15 @@
 #endif
 
 #ifndef ESP8266
+#if defined(__has_include)
+#if __has_include(<avr/pgmspace.h>)
 #include <avr/pgmspace.h>
+#elif __has_include(<pgmspace.h>)
+#include <pgmspace.h>
+#endif
+#else
+#include <avr/pgmspace.h>
+#endif
 
 void printProgramString (const char * str PROGMEM, Print & target);
 
