@@ -31,7 +31,7 @@
 #if defined(ARDUINO_ARCH_STM32)
 #include <malloc.h>
 #endif
-#ifndef ESP8266
+#if !defined(ESP8266) && !defined(ESP32)
 #include <Servo.h>
 #endif
 #include "pins_arduino.h"
@@ -75,7 +75,7 @@ bool checkPinIsOutputMode( int pin_nbre );
 
 int adc_resolution = 10;
 float VCC;
-#ifndef ESP8266
+#if !defined(ESP8266) && !defined(ESP32)
 Servo     servo;
 #endif
 ModeI2C   modeI2C;
@@ -410,13 +410,13 @@ void setup()
 
 // Run initial scan
   Serial.println();
-#if defined(__AVR__) || defined(ARDUINO_ARCH_STM32)
+#if defined(__AVR__) || defined(ARDUINO_ARCH_STM32) || defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
   VCC = readMCU_VCC()/1000.0f;
 #else
   VCC = -1.0f;
 #endif
   if (VCC < 0.0f) {
-#if defined(ARDUINO_ARCH_RP2040)
+#if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
     VCC = 3.3f;
 #else
     VCC = 5.0f;
@@ -825,7 +825,7 @@ void loop()
        if(pin >= 0 && isNumberPeek()) {
            int value = pollInt();
            checkPinIsOutputMode(pin);		
-#ifndef ESP8266
+#if !defined(ESP8266) && !defined(ESP32)
            servo.attach(pin);
            servo.write(value);
 #endif           
@@ -837,7 +837,7 @@ void loop()
            
            // Keep the position until next input
            pollPeek();
-#ifndef ESP8266
+#if !defined(ESP8266) && !defined(ESP32)
            servo.attach(pin);
 #endif
 		   clock_table[pin] = 0;
@@ -1048,6 +1048,8 @@ long readMCU_VCC(long voltage_reference)
 #elif defined(ARDUINO_ARCH_STM32) && defined(AVREF)
 	int raw_vref = analogRead(AVREF);
 	return __LL_ADC_CALC_VREFANALOG_VOLTAGE(raw_vref, get_stm32_adc_resolution_macro(adc_resolution));
+#elif defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+	return 3300;
 #else
 	return -1;
 #endif
@@ -1078,6 +1080,10 @@ long readMCUInternalTemp()
 	uint32_t vref_mv = __LL_ADC_CALC_VREFANALOG_VOLTAGE(raw_vref, get_stm32_adc_resolution_macro(adc_resolution));
 	int32_t temp_c = __LL_ADC_CALC_TEMPERATURE(vref_mv, raw_temp, get_stm32_adc_resolution_macro(adc_resolution));
 	return (long)(temp_c * 1000);
+#elif defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+	float t = temperatureRead();
+	if (isnan(t)) return -1000000;
+	return (long)(t * 1000.0f);
 #else
 	return -1000000;
 #endif
@@ -1094,6 +1100,8 @@ int freeRam()
 #elif defined(ARDUINO_ARCH_STM32)
 	struct mallinfo mi = mallinfo();
 	return mi.fordblks;
+#elif defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
+	return ESP.getFreeHeap();
 #else
 	return -1;
 #endif

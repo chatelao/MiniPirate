@@ -26,6 +26,8 @@
 #ifndef NUM_DIGITAL_PINS
 #if defined(ARDUINO_XIAO_RA4M1) || defined(ARDUINO_SEEED_XIAO_RP2040) || defined(ARDUINO_SEEED_XIAO_RP2350)
 #define NUM_DIGITAL_PINS 10
+#elif defined(ARDUINO_XIAO_ESP32C6) || defined(ARDUINO_SEEED_XIAO_ESP32C6)
+#define NUM_DIGITAL_PINS 11
 #else
 #define NUM_DIGITAL_PINS 30
 #endif
@@ -34,13 +36,15 @@
 #ifndef NUM_ANALOG_INPUTS
 #if defined(ARDUINO_XIAO_RA4M1) || defined(ARDUINO_SEEED_XIAO_RP2040) || defined(ARDUINO_SEEED_XIAO_RP2350)
 #define NUM_ANALOG_INPUTS 6
+#elif defined(ARDUINO_XIAO_ESP32C6) || defined(ARDUINO_SEEED_XIAO_ESP32C6)
+#define NUM_ANALOG_INPUTS 7
 #else
 #define NUM_ANALOG_INPUTS 4
 #endif
 #endif
 
 #ifndef digitalPinHasPWM
-#if defined(ARDUINO_ARCH_RP2040)
+#if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_ESP32) || defined(ESP32)
 #define digitalPinHasPWM(p) ((p) < NUM_DIGITAL_PINS)
 #endif
 #endif
