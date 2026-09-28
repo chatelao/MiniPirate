@@ -24,13 +24,16 @@ It is an ideal utility for electronics enthusiasts, hardware hackers, and profes
 
 MiniPirate is designed as a highly cross-platform Arduino library supporting a wide range of architectures:
 
-| Platform | Board Variant | FQBN / Core |
-|---|---|---|
-| **AVR** | Arduino Uno, Nano, Mega, etc. | `arduino:avr:uno` |
-| **RP2040** | Raspberry Pi Pico, Seeed Studio XIAO RP2040 | `rp2040:rp2040:rpipico`, `rp2040:rp2040:seeed_xiao_rp2040` |
-| **RP2350** | Raspberry Pi Pico 2, Seeed Studio XIAO RP2350 | `rp2040:rp2040:rpipico2`, `rp2040:rp2040:seeed_xiao_rp2350` |
-| **ARM Cortex-M4** | STM32 Nucleo G431RB, STM32 Nucleo F446RE | `STMicroelectronics:stm32:Nucleo_64` |
-| **Renesas RA4M1** | Seeed Studio XIAO RA4M1 | `Seeeduino:renesas_uno:XIAO_RA4M1` |
+| Platform | Board Variant | FQBN / Core | Flashing Guide |
+|---|---|---|---|
+| **AVR** | Arduino Uno, Nano, Mega | `arduino:avr:uno` | [HOWTO_FLASH_ARDUINO_UNO.md](HOWTO_FLASH_ARDUINO_UNO.md) |
+| **RP2040** | Raspberry Pi Pico | `rp2040:rp2040:rpipico` | [HOWTO_FLASH_RASPBERRY_PI_PICO.md](HOWTO_FLASH_RASPBERRY_PI_PICO.md) |
+| **RP2040** | Seeed Studio XIAO RP2040 | `rp2040:rp2040:seeed_xiao_rp2040` | [HOWTO_FLASH_SEEED_XIAO_RP2040.md](HOWTO_FLASH_SEEED_XIAO_RP2040.md) |
+| **RP2350** | Raspberry Pi Pico 2 | `rp2040:rp2040:rpipico2` | [HOWTO_FLASH_RASPBERRY_PI_PICO_2.md](HOWTO_FLASH_RASPBERRY_PI_PICO_2.md) |
+| **RP2350** | Seeed Studio XIAO RP2350 | `rp2040:rp2040:seeed_xiao_rp2350` | [HOWTO_FLASH_SEEED_XIAO_RP2350.md](HOWTO_FLASH_SEEED_XIAO_RP2350.md) |
+| **ARM Cortex-M4** | STM32 Nucleo G431RB | `STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_G431RB` | [HOWTO_FLASH_STM32_NUCLEO_G431RB.md](HOWTO_FLASH_STM32_NUCLEO_G431RB.md) |
+| **ARM Cortex-M4** | STM32 Nucleo F446RE | `STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_F446RE` | [HOWTO_FLASH_STM32_NUCLEO_F446RE.md](HOWTO_FLASH_STM32_NUCLEO_F446RE.md) |
+| **Renesas RA4M1** | Seeed Studio XIAO RA4M1 | `Seeeduino:renesas_uno:XIAO_RA4M1` | [HOWTO_FLASH_SEEED_XIAO_RA4M1.md](HOWTO_FLASH_SEEED_XIAO_RA4M1.md) |
 
 ---
 
