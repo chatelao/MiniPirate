@@ -71,8 +71,8 @@ void test_pollPin_analog(void) {
 
 // Test printStrDec formatting
 void test_printStrDec(void) {
-    printStrDec("Value: ", 75, 3);
-    // 75 with 3 digits padding should print '075'
+    printStrDec("Value: ", 75, 2);
+    // 75 with 2 padding digits should print '075'
     TEST_ASSERT_EQUAL_STRING("Value: 075", Serial.outputBuffer.c_str());
 }
 
