@@ -34,6 +34,7 @@ MiniPirate is designed as a highly cross-platform Arduino library supporting a w
 | **ARM Cortex-M4** | STM32 Nucleo G431RB | `STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_G431RB` | [HOWTO_FLASH_STM32_NUCLEO_G431RB.md](HOWTO_FLASH_STM32_NUCLEO_G431RB.md) |
 | **ARM Cortex-M4** | STM32 Nucleo F446RE | `STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_F446RE` | [HOWTO_FLASH_STM32_NUCLEO_F446RE.md](HOWTO_FLASH_STM32_NUCLEO_F446RE.md) |
 | **Renesas RA4M1** | Seeed Studio XIAO RA4M1 | `Seeeduino:renesas_uno:XIAO_RA4M1` | [HOWTO_FLASH_SEEED_XIAO_RA4M1.md](HOWTO_FLASH_SEEED_XIAO_RA4M1.md) |
+| **ESP32 RISC-V** | Seeed Studio XIAO ESP32-C6 | `esp32:esp32:XIAO_ESP32C6` | [HOWTO_FLASH_SEEED_XIAO_ESP32C6.md](HOWTO_FLASH_SEEED_XIAO_ESP32C6.md) |
 
 ---
 

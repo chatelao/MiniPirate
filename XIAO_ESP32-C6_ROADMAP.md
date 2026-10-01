@@ -130,7 +130,7 @@ Automate binary export and asset uploading when publishing new MiniPirate releas
 
 ## 6. Verification Checklist
 
-- [ ] Local build test passes using `arduino-cli compile --fqbn esp32:esp32:XIAO_ESP32C6 examples/Minipirate/Minipirate.ino`.
-- [ ] Documentation updated in `README.md` board support matrix.
-- [ ] `.github/workflows/build.yml` compiles XIAO ESP32-C6 successfully on CI.
-- [ ] `.github/workflows/release.yml` produces `Minipirate-xiao_esp32c6.bin` asset.
+- [x] Local build test passes using `arduino-cli compile --fqbn esp32:esp32:XIAO_ESP32C6 examples/Minipirate/Minipirate.ino`.
+- [x] Documentation updated in `README.md` board support matrix.
+- [x] `.github/workflows/build.yml` compiles XIAO ESP32-C6 successfully on CI.
+- [x] `.github/workflows/release.yml` produces `Minipirate-xiao_esp32c6.bin` asset.
