@@ -5,23 +5,23 @@
 This document provides a comprehensive comparative analysis across three major paradigms in open-source hardware hacking, debugging, and protocol analysis tools:
 
 1. **Tigard** (designed by SecuringHardware): An **on-host USB bridge board** built on the FTDI FT2232H chip. It offloads all protocol execution logic to host utilities (e.g., OpenOCD, Flashrom, PyFTDI, Sigrok/PulseView) via high-speed MPSSE hardware engines.
-2. **Bus Pirate** (v3, v4, and v5 series by Dangerous Prototypes / Bus Pirate team): A **dedicated open-source multi-protocol hardware hacking tool** running custom firmware on dedicated hardware. It features macro-driven bus syntax, programmable power supplies, on-board pull-ups, and voltage buffers.
+2. **Bus Pirate** (v5 series by Dangerous Prototypes / Bus Pirate team): A **dedicated open-source multi-protocol hardware hacking tool** running custom firmware on dedicated hardware. It features macro-driven bus syntax, programmable power supplies, on-board pull-ups, and voltage buffers.
 3. **MiniPirate**: A **lightweight, cross-platform CLI library** turning standard, low-cost maker microcontrollers (AVR, RP2040, RP2350, STM32, Renesas RA4M1, ESP32-C6) into interactive serial hardware tools with human-readable CLI commands, background pin clocks, and rich MCU diagnostics.
 
 ---
 
 ### Architectural Comparison Matrix
 
-| Dimension | Tigard (FT2232H) | Bus Pirate (v3 / v4 / v5) | MiniPirate |
+| Dimension | Tigard (FT2232H) | Bus Pirate (v5) | MiniPirate |
 |---|---|---|---|
 | **Primary Architectural Role** | On-host High-Speed USB Bridge | Dedicated Multi-Protocol Bus Analyzer | Lightweight, Universal Microcontroller CLI Engine |
-| **Core Hardware / Processor** | FTDI FT2232H (Dual USB 2.0 High-Speed Transceiver) | PIC24 (v3/v4) / RP2040 (v5) Dedicated Board | Generic Maker MCUs (ATmega328P, RP2040, RP2350, STM32, RA4M1, ESP32-C6) |
+| **Core Hardware / Processor** | FTDI FT2232H (Dual USB 2.0 High-Speed Transceiver) | RP2040 (v5) Dedicated Board | Generic Maker MCUs (ATmega328P, RP2040, RP2350, STM32, RA4M1, ESP32-C6) |
 | **Execution Paradigm** | Host-driven MPSSE state machine (Host executes logic) | Custom firmware executing queued sequential syntax macros | Direct execution per human-readable CLI command line |
 | **User Interface** | Host CLI / APIs (`flashrom`, `openocd`, `pyftdi`, `picocom`) | Dedicated VT100 Serial CLI / Display Screen (v5) | Standalone Serial Terminal (PuTTY, Minicom, Serial Monitor) |
 | **Operating Voltages** | Flexible Level Shifting: **1.2V to 5.5V** | Programmable rails (3.3V/5V) & voltage buffers | Fixed 3.3V / 5.0V native I/O (VCC sensing on supported MCUs) |
 | **USB Bandwidth** | USB 2.0 High-Speed (**480 Mbps**) | USB 2.0 Full-Speed CDC ACM (12 Mbps) | USB 2.0 Full-Speed CDC ACM / UART Serial (12 Mbps / 57.6k-115.2k CLI) |
 | **Clock Frequencies** | Up to **30 MHz** (SPI/MPSSE), UART up to 12 Mbps | Up to 400kHz - 8MHz (I2C/SPI) | Up to 400kHz - 1MHz (I2C/SPI), background ms clock generator |
-| **Debugging Protocols** | Native Hardware JTAG, SWD, SWO | Slow Bitbang JTAG (v3/v4), Hardware JTAG/SWD (v5) | Protocol/Logic interaction (JTAG/SWD planned via bitbang/PIO) |
+| **Debugging Protocols** | Native Hardware JTAG, SWD, SWO | Hardware JTAG/SWD (v5) | Protocol/Logic interaction (JTAG/SWD planned via bitbang/PIO) |
 | **Analog & Actuators** | None (pure digital bridge) | 1-channel ADC probe / VREG monitoring | Multi-channel ADC (`a`, `aa`), PWM (`g`, `gg`), Servo motor control (`s`) |
 | **Persistence** | N/A (Host-driven configuration) | Onboard Flash / EEPROM configuration storage | Internal EEPROM state persistence (`x` save, `y` restore, `e` erase) |
 
@@ -29,24 +29,24 @@ This document provides a comprehensive comparative analysis across three major p
 
 ## 2. Hardware & Protocol Feature Matrix
 
-| Feature / Protocol | Tigard (FT2232H) | Bus Pirate v3/v4 | Bus Pirate v5 | MiniPirate |
-|---|---|---|---|---|
-| **Interactive Terminal Shell** | ❌ None (Requires host tools/scripts) | ✅ Built-in VT100 CLI | ✅ Built-in VT100 CLI + LCD | ✅ Human-Readable Serial CLI (`h`, `?`, `h [cmd]`) |
-| **I2C Master** | ✅ PyFTDI / `i2c-tools` / libftdi | ✅ Standard Hardware/Bitbang | ✅ Native Hardware Engine | ✅ Device scan, active address select, read/write (`i`, `#`, `r`, `w`) |
-| **SPI Master / Slave** | ✅ High-Speed MPSSE (up to 30 MHz) | ✅ Hardware / Bitbang SPI | ✅ High-Speed Hardware SPI | 🔄 Planned (Reserved stub `m s`) |
-| **UART / Async Serial** | ✅ Dual Hardware UART channels (up to 12 Mbps) | ✅ Hardware UART Bridge | ✅ Hardware UART / Sniffer | 🔄 Terminal / Bridge mode planned |
-| **1-Wire Protocol** | ❌ Bitbang via host API | ✅ Native 1-Wire Support | ✅ Native 1-Wire Support | 🔄 Planned |
-| **JTAG Debugging** | ✅ Native MPSSE OpenOCD Support | ⚠️ Slow Bitbang JTAG | ✅ Hardware JTAG Engine | 🔄 Planned via PIO/Bitbang |
-| **SWD Debugging** | ✅ Native OpenOCD / OpenSWD Support | ❌ No native SWD | ✅ Hardware SWD Engine | 🔄 Planned via PIO/Bitbang |
-| **Logic Analyzer / Sniffing** | ✅ Sigrok / PulseView integration | ✅ 5-channel SUMP Logic Sniffer | ✅ High-speed Logic Analyzer | 🔄 Planned (SUMP / CDC integration) |
-| **GPIO Control** | ✅ PyFTDI GPIO API / `gpiod` | ✅ Interactive Pin Commands | ✅ Interactive Pin Commands | ✅ Interactive CLI (`<`, `>`, `/`, `\`, `^`, `$`, `z`) |
-| **ADC / Voltage Measure** | ❌ Not available | ✅ 1-channel ADC probe | ✅ Multi-channel ADC | ✅ Multi-channel ADC (`a`, `aa`, `ar`), MCU VCC (`v`) |
-| **PWM Output** | ❌ Not available | ✅ 1-channel PWM generator | ✅ Multi-channel PWM | ✅ Configurable PWM (`g`, `gg`), Background Clock (`c`) |
-| **Servo Motor Control** | ❌ Not available | ❌ Requires custom macros | ❌ Requires custom macros | ✅ Direct Servo motor control (`s [pin] [deg]`) |
-| **Internal Diagnostics** | ❌ N/A (FTDI chip) | ⚠️ Limited VREG monitoring | ✅ Rail monitoring | ✅ VCC (`v`), Chip Temp (`t`), Free RAM (`f`), Uptime (`u`) |
-| **Level Shifting** | ✅ Adjustable 1.2V - 5.5V shifters | ❌ Fixed 3.3V / 5.0V | ✅ Programmable 1.2V - 5.0V | ❌ Target-native logic levels (3.3V or 5V) |
-| **Power Supply Control** | ❌ Fixed board rails | ✅ Switched 3.3V / 5.0V rails | ✅ Programmable 1.2V - 5.0V VREG | ❌ Relies on board power rails (3.3V / 5V) |
-| **State Persistence** | ❌ N/A | ✅ Save/Restore settings | ✅ Save/Restore settings | ✅ EEPROM state persistence (`x`, `y`, `e`) |
+| Feature / Protocol | Tigard (FT2232H) | Bus Pirate (v5) | MiniPirate |
+|---|---|---|---|
+| **Interactive Terminal Shell** | ❌ None (Requires host tools/scripts) | ✅ Built-in VT100 CLI + LCD | ✅ Human-Readable Serial CLI (`h`, `?`, `h [cmd]`) |
+| **I2C Master** | ✅ PyFTDI / `i2c-tools` / libftdi | ✅ Native Hardware Engine | ✅ Device scan, active address select, read/write (`i`, `#`, `r`, `w`) |
+| **SPI Master / Slave** | ✅ High-Speed MPSSE (up to 30 MHz) | ✅ High-Speed Hardware SPI | 🔄 Planned (Reserved stub `m s`) |
+| **UART / Async Serial** | ✅ Dual Hardware UART channels (up to 12 Mbps) | ✅ Hardware UART / Sniffer | 🔄 Terminal / Bridge mode planned |
+| **1-Wire Protocol** | ❌ Bitbang via host API | ✅ Native 1-Wire Support | 🔄 Planned |
+| **JTAG Debugging** | ✅ Native MPSSE OpenOCD Support | ✅ Hardware JTAG Engine | 🔄 Planned via PIO/Bitbang |
+| **SWD Debugging** | ✅ Native OpenOCD / OpenSWD Support | ✅ Hardware SWD Engine | 🔄 Planned via PIO/Bitbang |
+| **Logic Analyzer / Sniffing** | ✅ Sigrok / PulseView integration | ✅ High-speed Logic Analyzer | 🔄 Planned (SUMP / CDC integration) |
+| **GPIO Control** | ✅ PyFTDI GPIO API / `gpiod` | ✅ Interactive Pin Commands | ✅ Interactive CLI (`<`, `>`, `/`, `\`, `^`, `$`, `z`) |
+| **ADC / Voltage Measure** | ❌ Not available | ✅ Multi-channel ADC | ✅ Multi-channel ADC (`a`, `aa`, `ar`), MCU VCC (`v`) |
+| **PWM Output** | ❌ Not available | ✅ Multi-channel PWM | ✅ Configurable PWM (`g`, `gg`), Background Clock (`c`) |
+| **Servo Motor Control** | ❌ Not available | ❌ Requires custom macros | ✅ Direct Servo motor control (`s [pin] [deg]`) |
+| **Internal Diagnostics** | ❌ N/A (FTDI chip) | ✅ Rail monitoring | ✅ VCC (`v`), Chip Temp (`t`), Free RAM (`f`), Uptime (`u`) |
+| **Level Shifting** | ✅ Adjustable 1.2V - 5.5V shifters | ✅ Programmable 1.2V - 5.0V | ❌ Target-native logic levels (3.3V or 5V) |
+| **Power Supply Control** | ❌ Fixed board rails | ✅ Programmable 1.2V - 5.0V VREG | ❌ Relies on board power rails (3.3V / 5V) |
+| **State Persistence** | ❌ N/A | ✅ Save/Restore settings | ✅ EEPROM state persistence (`x`, `y`, `e`) |
 
 ---
 
@@ -132,13 +132,13 @@ New servo value on pin 10: 90
 
 #### System & Diagnostic Commands
 
-| Feature / Action | MiniPirate Syntax | Bus Pirate Syntax (v3/v4/v5) | Notes |
+| Feature / Action | MiniPirate Syntax | Bus Pirate Syntax (v5) | Notes |
 |---|---|---|---|
 | **Main Help** | `h` or `?` | `?` or `h` | MiniPirate supports `h [cmd]` for extended help. |
 | **Extended Help** | `h p`, `h g`, `h i`, etc. | `?` (context menu) | MiniPirate stores extended help in Flash (PROGMEM). |
 | **System Info / Status** | Boot printout / `f` (free RAM/Flash) | `i` | MiniPirate displays RAM, EEPROM, and Flash memory sizes. |
 | **Voltage Measurement** | `v` | `v` / `V` | MiniPirate measures MCU VCC; Bus Pirate measures external ADC probe/rails. |
-| **Internal Temperature** | `t` | `t` (v5) / `v` | MiniPirate measures internal MCU chip temperature (if supported). |
+| **Internal Temperature** | `t` | `t` | MiniPirate measures internal MCU chip temperature (if supported). |
 | **Uptime** | `u` | `u` | MiniPirate prints uptime in seconds (`millis()/1000.0`). |
 | **Software Reset** | `*` | `#` | MiniPirate reboots MCU via zero-pointer jump; Bus Pirate resets state machine / MCU. |
 | **Global Pin Reset** | `z` | `m 1` (HiZ mode) | MiniPirate sets all pins to INPUT & LOW and stops active clocks. |
