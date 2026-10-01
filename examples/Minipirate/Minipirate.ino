@@ -123,6 +123,7 @@ void mpHelp() {
   SERIAL_PRINTLN_PGM("ar - Set ADC resolution (or show if no value)");
   SERIAL_PRINTLN_PGM("g - Set analog (pwm) value");
   SERIAL_PRINTLN_PGM("gg - Change analog (pwm) frequency");
+  SERIAL_PRINTLN_PGM("ggg - Stop all PWM immediately and set outputs to low");
 
   SERIAL_PRINTLN_PGM("s - Set servo value");
 
@@ -281,15 +282,17 @@ void printExtendedHelp(char cmd) {
 
     case 'g':
       {
-        SERIAL_PRINTLN_PGM("HELP: PWM / Analog Output ('g', 'gg')");
-        SERIAL_PRINTLN_PGM("=====================================");
+        SERIAL_PRINTLN_PGM("HELP: PWM / Analog Output ('g', 'gg', 'ggg')");
+        SERIAL_PRINTLN_PGM("============================================");
         SERIAL_PRINTLN_PGM("g [pin] [value] - Writes a PWM/analog value (typically 0-255) to");
         SERIAL_PRINTLN_PGM("                  the specified PWM-capable pin.");
         SERIAL_PRINTLN_PGM("gg [frequency]  - Sets the PWM frequency in Hz (supported on");
         SERIAL_PRINTLN_PGM("                  ESP8266 and RP2040 microcontrollers).");
+        SERIAL_PRINTLN_PGM("ggg             - Stops all PWM immediately and sets all outputs to LOW.");
         SERIAL_PRINTLN_PGM("Examples:");
         SERIAL_PRINTLN_PGM("  g 9 128  - Sets pin 9 PWM to 50% duty cycle (128/255)");
         SERIAL_PRINTLN_PGM("  gg 1000  - Sets PWM frequency to 1000 Hz");
+        SERIAL_PRINTLN_PGM("  ggg      - Stops all active PWM and sets outputs LOW");
       }
       break;
 
@@ -713,21 +716,40 @@ void loop()
      {
        if (tolower(pollPeek()) == 'g') {
          pollSerial(); // consume second 'g'
-         pollBlanks();
-         if (isNumberPeek()) {
-           int freq = pollInt();
+         if (tolower(pollPeek()) == 'g') {
+           pollSerial(); // consume third 'g'
            Serial.println();
-#if defined(ESP8266) || defined(ARDUINO_ARCH_RP2040)
-           analogWriteFreq(freq);
-           SERIAL_PRINT_PGM("New PWM frequency set to ");
-           Serial.print(freq);
-           SERIAL_PRINTLN_PGM(" Hz");
+           SERIAL_PRINTLN_PGM("Stopping all PWM and setting outputs to LOW...");
+           clearClockTable();
+           for (int i = 0; i < NUM_DIGITAL_PINS; i++) {
+#ifdef digitalPinHasPWM
+             if (digitalPinHasPWM(i)) {
+               analogWrite(i, 0);
+             }
 #else
-           SERIAL_PRINTLN_PGM("Changing PWM frequency is not supported on this chip");
+             analogWrite(i, 0);
 #endif
+             if (getPinMode(i) != 0) {
+               digitalWrite(i, LOW);
+             }
+           }
          } else {
-           Serial.println();
-           SERIAL_PRINTLN_PGM("Invalid frequency value!");
+           pollBlanks();
+           if (isNumberPeek()) {
+             int freq = pollInt();
+             Serial.println();
+#if defined(ESP8266) || defined(ARDUINO_ARCH_RP2040)
+             analogWriteFreq(freq);
+             SERIAL_PRINT_PGM("New PWM frequency set to ");
+             Serial.print(freq);
+             SERIAL_PRINTLN_PGM(" Hz");
+#else
+             SERIAL_PRINTLN_PGM("Changing PWM frequency is not supported on this chip");
+#endif
+           } else {
+             Serial.println();
+             SERIAL_PRINTLN_PGM("Invalid frequency value!");
+           }
          }
        } else {
          int pin_nbre = pollPin();

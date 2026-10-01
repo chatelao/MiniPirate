@@ -98,6 +98,7 @@ For extended help on any specific command, type `h <command>` (for example, `h p
 | `ar` | Show current ADC reading resolution | `ar` |
 | `g [pin] [val]`| Set analog / PWM output value (0-255) | `g 9 128` (sets PWM on pin 9 to 50% duty cycle)|
 | `gg [freq]`| Set analog / PWM output frequency in Hz (RP2040/ESP8266) | `gg 1000` (sets PWM frequency to 1000Hz) |
+| `ggg` | Stop all PWM immediately and set outputs to LOW | `ggg` |
 | `s [pin] [deg]`| Set servo position angle (0-180) | `s 10 90` (sets servo on pin 10 to 90 degrees)|
 
 ### I2C Commands
