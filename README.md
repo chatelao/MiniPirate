@@ -33,6 +33,7 @@ MiniPirate is designed as a highly cross-platform Arduino library supporting a w
 | **RP2350** | Seeed Studio XIAO RP2350 | `rp2040:rp2040:seeed_xiao_rp2350` | [HOWTO_FLASH_SEEED_XIAO_RP2350.md](HOWTO_FLASH_SEEED_XIAO_RP2350.md) |
 | **ARM Cortex-M4** | STM32 Nucleo G431RB | `STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_G431RB` | [HOWTO_FLASH_STM32_NUCLEO_G431RB.md](HOWTO_FLASH_STM32_NUCLEO_G431RB.md) |
 | **ARM Cortex-M4** | STM32 Nucleo F446RE | `STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_F446RE` | [HOWTO_FLASH_STM32_NUCLEO_F446RE.md](HOWTO_FLASH_STM32_NUCLEO_F446RE.md) |
+| **ARM Cortex-M33** | STM32 Nucleo C542RC | `STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_C542RC` | [HOWTO_FLASH_STM32_NUCLEO_C542RC.md](HOWTO_FLASH_STM32_NUCLEO_C542RC.md) |
 | **Renesas RA4M1** | Seeed Studio XIAO RA4M1 | `Seeeduino:renesas_uno:XIAO_RA4M1` | [HOWTO_FLASH_SEEED_XIAO_RA4M1.md](HOWTO_FLASH_SEEED_XIAO_RA4M1.md) |
 | **ESP32 RISC-V** | Seeed Studio XIAO ESP32-C6 | `esp32:esp32:XIAO_ESP32C6` | [HOWTO_FLASH_SEEED_XIAO_ESP32C6.md](HOWTO_FLASH_SEEED_XIAO_ESP32C6.md) |
 

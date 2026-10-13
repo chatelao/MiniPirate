@@ -30,6 +30,12 @@
 #endif
 #if defined(ARDUINO_ARCH_STM32)
 #include <malloc.h>
+#ifndef __LL_ADC_CALC_VREFANALOG_VOLTAGE
+#define __LL_ADC_CALC_VREFANALOG_VOLTAGE LL_ADC_CALC_VREFANALOG_VOLTAGE
+#endif
+#ifndef __LL_ADC_CALC_TEMPERATURE
+#define __LL_ADC_CALC_TEMPERATURE LL_ADC_CALC_TEMPERATURE
+#endif
 #endif
 #if !defined(ESP8266) && !defined(ESP32)
 #include <Servo.h>
