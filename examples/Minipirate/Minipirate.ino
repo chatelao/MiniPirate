@@ -40,6 +40,15 @@
 #if !defined(ESP8266) && !defined(ESP32)
 #include <Servo.h>
 #endif
+#if defined(ESP32) || defined(ESP8266) || defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_RASPBERRY_PI_PICO_W) || defined(ARDUINO_RASPBERRY_PI_PICO2_W)
+#if __has_include(<ESP8266WiFi.h>)
+#include <ESP8266WiFi.h>
+#define HAS_WIFI_SUPPORT 1
+#elif __has_include(<WiFi.h>)
+#include <WiFi.h>
+#define HAS_WIFI_SUPPORT 1
+#endif
+#endif
 #include "pins_arduino.h"
 #include "modeBase.h"
 #include "modeI2C.h"
@@ -77,6 +86,7 @@ long readMCU_VCC (long voltage_reference = INTERNAL_VOLTAGE_REFERENCE);
 long readMCUInternalTemp();
 int freeRam();
 bool checkPinIsOutputMode( int pin_nbre );
+void scanWiFiNetworks();
 
 
 int adc_resolution = 10;
@@ -140,6 +150,7 @@ void mpHelp() {
   SERIAL_PRINTLN_PGM("i - Scan i2c device addresses");
   SERIAL_PRINTLN_PGM("# - Set i2c device active x ");
   SERIAL_PRINTLN_PGM("r # - Read i2c n bytes from active device");
+  SERIAL_PRINTLN_PGM("w - Scan visible WiFi networks");
   SERIAL_PRINTLN_PGM("w # # # - Write i2c bytes to active device");
 
 
@@ -316,22 +327,33 @@ void printExtendedHelp(char cmd) {
     case 'i':
     case '#':
     case 'r':
-    case 'w':
       {
-        SERIAL_PRINTLN_PGM("HELP: I2C Communication ('i', '#', 'r', 'w')");
-        SERIAL_PRINTLN_PGM("============================================");
+        SERIAL_PRINTLN_PGM("HELP: I2C Communication ('i', '#', 'r')");
+        SERIAL_PRINTLN_PGM("=======================================");
         SERIAL_PRINTLN_PGM("i               - Scans the I2C bus for connected device addresses.");
         SERIAL_PRINTLN_PGM("# [address]     - Selects the active I2C device address.");
         SERIAL_PRINTLN_PGM("                  Address can be in HEX (0x27), BIN (0b0100111),");
         SERIAL_PRINTLN_PGM("                  or DEC (39).");
         SERIAL_PRINTLN_PGM("r [count]       - Reads the specified number of bytes from the");
         SERIAL_PRINTLN_PGM("                  currently active I2C device.");
-        SERIAL_PRINTLN_PGM("w [b1] [b2]...  - Writes the specified bytes to the active I2C device.");
         SERIAL_PRINTLN_PGM("Examples:");
         SERIAL_PRINTLN_PGM("  i             - Scan for active I2C devices");
         SERIAL_PRINTLN_PGM("  # 0x50        - Set active I2C device to address 0x50");
-        SERIAL_PRINTLN_PGM("  w 0x00 0x12   - Write 0x00, 0x12 to selected device");
         SERIAL_PRINTLN_PGM("  r 4           - Read 4 bytes from selected device");
+      }
+      break;
+
+    case 'w':
+      {
+        SERIAL_PRINTLN_PGM("HELP: WiFi Scan / I2C Write ('w')");
+        SERIAL_PRINTLN_PGM("=================================");
+        SERIAL_PRINTLN_PGM("w           - Scans and lists visible WiFi networks");
+        SERIAL_PRINTLN_PGM("              (SSID, RSSI/Signal, Channel, Auth mode)");
+        SERIAL_PRINTLN_PGM("              if supported by the microcontroller.");
+        SERIAL_PRINTLN_PGM("w [b1] [b2] - Writes specified bytes to the active I2C device.");
+        SERIAL_PRINTLN_PGM("Examples:");
+        SERIAL_PRINTLN_PGM("  w         - Scan WiFi networks");
+        SERIAL_PRINTLN_PGM("  w 0x00    - Write 0x00 to active I2C device");
       }
       break;
 
@@ -978,7 +1000,12 @@ void loop()
     break;
 
     case 'w':
-      modeI2C.write(); 
+      pollBlanks();
+      if (isNumberPeek()) {
+        modeI2C.write();
+      } else {
+        scanWiFiNetworks();
+      }
     break;
     
 #ifdef __AVR__
@@ -1134,6 +1161,80 @@ int freeRam()
 	return -1;
 #endif
 	}
+
+void scanWiFiNetworks()
+{
+#if defined(HAS_WIFI_SUPPORT)
+  Serial.println();
+  SERIAL_PRINTLN_PGM("SCANNING WIFI NETWORKS...");
+  SERIAL_PRINTLN_PGM("=========================");
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+  delay(100);
+
+  int n = WiFi.scanNetworks();
+  if (n <= 0) {
+    SERIAL_PRINTLN_PGM("No WiFi networks found");
+  } else {
+    Serial.print(n);
+    SERIAL_PRINTLN_PGM(" networks found:");
+    for (int i = 0; i < n; ++i) {
+      Serial.print(i + 1);
+      Serial.print(": ");
+      Serial.print(WiFi.SSID(i));
+      Serial.print(" (");
+      Serial.print(WiFi.RSSI(i));
+      SERIAL_PRINT_PGM(" dBm, Ch: ");
+      Serial.print(WiFi.channel(i));
+      SERIAL_PRINT_PGM(", Auth: ");
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
+      switch (WiFi.encryptionType(i)) {
+        case WIFI_AUTH_OPEN:            Serial.print("Open"); break;
+        case WIFI_AUTH_WEP:             Serial.print("WEP"); break;
+        case WIFI_AUTH_WPA_PSK:         Serial.print("WPA_PSK"); break;
+        case WIFI_AUTH_WPA2_PSK:        Serial.print("WPA2_PSK"); break;
+        case WIFI_AUTH_WPA_WPA2_PSK:   Serial.print("WPA_WPA2_PSK"); break;
+        case WIFI_AUTH_WPA2_ENTERPRISE: Serial.print("WPA2_ENTERPRISE"); break;
+        case WIFI_AUTH_WPA3_PSK:        Serial.print("WPA3_PSK"); break;
+        case WIFI_AUTH_WPA2_WPA3_PSK:   Serial.print("WPA2_WPA3_PSK"); break;
+        default:                        Serial.print("Unknown"); break;
+      }
+#elif defined(ESP8266) || defined(ARDUINO_ARCH_ESP8266)
+      switch (WiFi.encryptionType(i)) {
+        case ENC_TYPE_NONE: Serial.print("Open"); break;
+        case ENC_TYPE_WEP:  Serial.print("WEP"); break;
+        case ENC_TYPE_TKIP: Serial.print("WPA_PSK"); break;
+        case ENC_TYPE_CCMP: Serial.print("WPA2_PSK"); break;
+        case ENC_TYPE_AUTO: Serial.print("Auto"); break;
+        default:            Serial.print("Encrypted"); break;
+      }
+#else
+#if defined(ENC_TYPE_NONE)
+      if (WiFi.encryptionType(i) == ENC_TYPE_NONE) {
+        Serial.print("Open");
+      } else {
+        Serial.print("Encrypted");
+      }
+#else
+      if (WiFi.encryptionType(i) == 0) {
+        Serial.print("Open");
+      } else {
+        Serial.print("Encrypted");
+      }
+#endif
+#endif
+      Serial.println(")");
+      delay(10);
+    }
+  }
+#if defined(ESP32) || defined(ARDUINO_ARCH_ESP32)
+  WiFi.scanDelete();
+#endif
+#else
+  Serial.println();
+  SERIAL_PRINTLN_PGM("Not supported on this chip");
+#endif
+}
 
 //-----------------------------------------------------------------------------------------------------------------
 bool checkPinIsOutputMode( int pin_nbre )

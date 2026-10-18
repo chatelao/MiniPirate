@@ -10,6 +10,7 @@ It is an ideal utility for electronics enthusiasts, hardware hackers, and profes
 
 ## 🚀 Key Features
 
+- **WiFi Network Scanning:** Scan and display visible WiFi networks (SSID, signal strength, channel, and security mode) on supported microcontrollers (e.g. ESP32).
 - **I2C Bus Diagnostics:** Full support for scanning I2C addresses, selecting active devices, and performing non-blocking reads and writes.
 - **Rich GPIO Control:** Instantly change pin directions (INPUT/OUTPUT), toggle states, read analog/digital values, and perform sequential pin sweeps.
 - **Automated Clock Generator:** Generate a clock signal on any pin with custom millisecond-level intervals.
@@ -72,6 +73,7 @@ For extended help on any specific command, type `h <command>` (for example, `h p
 | `*` | Software Reboot | `Rebooting...` |
 | `x` | Save current pin directions, states, and clocks to EEPROM | `Saved state to EEPROM` |
 | `y` | Load and restore configuration from EEPROM | `Loaded state from EEPROM` |
+| `w` | Scan visible WiFi networks (if supported) | `SCANNING WIFI NETWORKS...` |
 
 ### Digital GPIO Commands
 
