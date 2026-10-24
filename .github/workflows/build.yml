@@ -15,54 +15,10 @@ jobs:
 
       - name: Install platform and libraries
         run: |
-          arduino-cli core update-index --additional-urls https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json,https://raw.githubusercontent.com/stm32duino/BoardManagerFiles/main/package_stmicroelectronics_index.json,https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json,https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core update-index --additional-urls https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json,https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectronics_index.json,https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json,https://espressif.github.io/arduino-esp32/package_esp32_index.json
           arduino-cli core install arduino:avr
           arduino-cli core install rp2040:rp2040 --additional-urls https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
-          arduino-cli core install STMicroelectronics:stm32 --additional-urls https://raw.githubusercontent.com/stm32duino/BoardManagerFiles/main/package_stmicroelectronics_index.json
-          CORE_DIR=$HOME/.arduino15/packages/STMicroelectronics/hardware/stm32
-          if [ -d "$CORE_DIR" ]; then
-            BOARDS_TXT=$(find $CORE_DIR -name boards.txt | head -n 1)
-            if [ -f "$BOARDS_TXT" ]; then
-              if ! grep -q "GENERIC_C542RCTX" "$BOARDS_TXT"; then
-                cat << 'EOF' >> "$BOARDS_TXT"
-
-# Generic C542RCTx
-GenC5.menu.pnum.GENERIC_C542RCTX=Generic C542RCTx
-GenC5.menu.pnum.GENERIC_C542RCTX.upload.maximum_size=262144
-GenC5.menu.pnum.GENERIC_C542RCTX.upload.maximum_data_size=65536
-GenC5.menu.pnum.GENERIC_C542RCTX.build.board=GENERIC_C542RCTX
-GenC5.menu.pnum.GENERIC_C542RCTX.build.product_line=STM32C542xx
-GenC5.menu.pnum.GENERIC_C542RCTX.build.variant=STM32C5xx/C532R(B-C)T_C542RCT
-GenC5.menu.pnum.GENERIC_C542RCTX.debug.svd_file={runtime.tools.STM32_SVD.path}/svd/STM32C5xx/STM32C542.svd
-EOF
-              fi
-              if ! grep -q "NUCLEO_C542RC" "$BOARDS_TXT"; then
-                cat << 'EOF' >> "$BOARDS_TXT"
-
-# NUCLEO_C542RC board
-Nucleo_64.menu.pnum.NUCLEO_C542RC=Nucleo C542RC
-Nucleo_64.menu.pnum.NUCLEO_C542RC.node="NOD_C542RC"
-Nucleo_64.menu.pnum.NUCLEO_C542RC.upload.maximum_size=262144
-Nucleo_64.menu.pnum.NUCLEO_C542RC.upload.maximum_data_size=65536
-Nucleo_64.menu.pnum.NUCLEO_C542RC.build.mcu=cortex-m33
-Nucleo_64.menu.pnum.NUCLEO_C542RC.build.fpu=-mfpu=fpv5-sp-d16
-Nucleo_64.menu.pnum.NUCLEO_C542RC.build.float-abi=-mfloat-abi=hard
-Nucleo_64.menu.pnum.NUCLEO_C542RC.build.hal=-DUSE_HALV2_DRIVER
-Nucleo_64.menu.pnum.NUCLEO_C542RC.build.board=GENERIC_C542RCTX
-Nucleo_64.menu.pnum.NUCLEO_C542RC.build.series=STM32C5xx
-Nucleo_64.menu.pnum.NUCLEO_C542RC.build.product_line=STM32C542xx
-Nucleo_64.menu.pnum.NUCLEO_C542RC.build.variant=STM32C5xx/C532R(B-C)T_C542RCT
-Nucleo_64.menu.pnum.NUCLEO_C542RC.build.variant_h=variant_generic.h
-Nucleo_64.menu.pnum.NUCLEO_C542RC.debug.svd_file={runtime.tools.STM32_SVD.path}/svd/STM32C5xx/STM32C542.svd
-EOF
-              fi
-            fi
-            SRC_LD=$(find $CORE_DIR -path "*/C552R*" -name "ldscript.ld" | head -n 1)
-            DST_DIR=$(find $CORE_DIR -path "*/C532R*" -type d | head -n 1)
-            if [ -n "$SRC_LD" ] && [ -n "$DST_DIR" ] && [ ! -f "$DST_DIR/ldscript.ld" ]; then
-              cp "$SRC_LD" "$DST_DIR/ldscript.ld"
-            fi
-          fi
+          arduino-cli core install STMicroelectronics:stm32 --additional-urls https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectronics_index.json
           arduino-cli core install Seeeduino:renesas_uno --additional-urls https://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
           arduino-cli core install esp32:esp32 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
           arduino-cli lib install Servo
@@ -82,5 +38,4 @@ EOF
           arduino-cli compile --fqbn Seeeduino:renesas_uno:XIAO_RA4M1 examples/Minipirate/Minipirate.ino
           arduino-cli compile --fqbn STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_G431RB examples/Minipirate/Minipirate.ino
           arduino-cli compile --fqbn STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_F446RE examples/Minipirate/Minipirate.ino
-          arduino-cli compile --fqbn STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_C542RC examples/Minipirate/Minipirate.ino
           arduino-cli compile --fqbn esp32:esp32:XIAO_ESP32C6 examples/Minipirate/Minipirate.ino
