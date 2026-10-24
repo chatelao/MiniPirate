@@ -8,9 +8,9 @@ This guide provides step-by-step instructions for flashing MiniPirate firmware o
 
 - **Board Name:** STM32 Nucleo C542RC (Nucleo-64 series)
 - **Architecture:** ARM Cortex-M33 (STM32C5 Series with TrustZone / Security Features & HAL v2)
-- **FQBN:** `STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_C542RC`
+- **FQBN:** `STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_C562RE`
 - **Core Package Index:** `https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectronics_index.json`
-- **Release Assets:** `Minipirate-nucleo_c542rc.bin`, `Minipirate-nucleo_c542rc.hex`
+- **Release Assets:** `Minipirate-nucleo_c562re.bin`, `Minipirate-nucleo_c562re.hex`
 
 ---
 
@@ -38,15 +38,15 @@ The Nucleo-64 C542RC board includes an integrated ST-LINK/V3 or ST-LINK/V2-1 int
 ## 🚀 Flashing Pre-compiled Binaries (`.bin` / `.hex`)
 
 ### Method 1: ST-LINK Mass Storage Drag-and-Drop
-1. Download `Minipirate-nucleo_c542rc.bin` from release assets.
+1. Download `Minipirate-nucleo_c562re.bin` from release assets.
 2. Connect the Nucleo C542RC board to your PC via USB.
-3. Open the mounted mass storage volume (e.g. `NOD_C542RC`).
-4. Copy `Minipirate-nucleo_c542rc.bin` into the root directory of the drive.
+3. Open the mounted mass storage volume (e.g. `NOD_C562RE`).
+4. Copy `Minipirate-nucleo_c562re.bin` into the root directory of the drive.
 5. The ST-LINK LED will flash while burning, and reset upon completion.
 
 ### Method 2: Using STM32CubeProgrammer CLI
 ```bash
-STM32_Programmer_CLI -c port=SWD -w Minipirate-nucleo_c542rc.bin 0x08000000 -v -rst
+STM32_Programmer_CLI -c port=SWD -w Minipirate-nucleo_c562re.bin 0x08000000 -v -rst
 ```
 
 ---
@@ -56,10 +56,10 @@ STM32_Programmer_CLI -c port=SWD -w Minipirate-nucleo_c542rc.bin 0x08000000 -v -
 ### Using Arduino CLI
 ```bash
 # Compile
-arduino-cli compile --fqbn STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_C542RC examples/Minipirate/Minipirate.ino
+arduino-cli compile --fqbn STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_C562RE examples/Minipirate/Minipirate.ino
 
 # Upload
-arduino-cli upload -p /dev/ttyACM0 --fqbn STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_C542RC examples/Minipirate/Minipirate.ino
+arduino-cli upload -p /dev/ttyACM0 --fqbn STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_C562RE examples/Minipirate/Minipirate.ino
 ```
 
 ### Using Arduino IDE
