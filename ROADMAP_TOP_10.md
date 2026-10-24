@@ -25,7 +25,7 @@ MiniPirate aims to provide a unified, plug-and-play interactive hardware termina
 | **3** | **ESP32 DevKit / S3 / C3** | Dual-core Xtensa LX6 / LX7 / RISC-V (ESP32-C3) | `esp32:esp32` | `esp32:esp32:esp32`, `esp32:esp32:esp32s3`, `esp32:esp32:esp32c3` | `.bin` | Planned |
 | **4** | **Seeed Studio XIAO Series** | SAMD21, RP2040, RP2350, RA4M1, ESP32-C3, ESP32-S3 | `Seeeduino:samd`, `rp2040:rp2040`, `Seeeduino:renesas_uno`, `esp32:esp32` | `rp2040:rp2040:seeed_xiao_rp2040`, `Seeeduino:renesas_uno:XIAO_RA4M1` | `.uf2` / `.bin` | Supported |
 | **5** | **ESP8266 NodeMCU & D1 Mini** | 32-bit RISC Xtensa L106 (ESP8266EX) | `esp8266:esp8266` | `esp8266:esp8266:nodemcuv2`, `esp8266:esp8266:d1_mini` | `.bin` | Planned |
-| **6** | **STM32 Nucleo & Pill Series** | ARM Cortex-M3 / M4 / M33 (STM32F103, STM32F401, STM32G431, STM32F446, STM32C542) | `STMicroelectronics:stm32` | `STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_G431RB`, `STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_F446RE`, `STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_C542RC` | `.bin` / `.hex` | Supported |
+| **6** | **STM32 Nucleo & Pill Series** | ARM Cortex-M3 / M4 / M33 (STM32F103, STM32F401, STM32G431, STM32F446, STM32C562) | `STMicroelectronics:stm32` | `STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_G431RB`, `STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_F446RE`, `STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_C562RE` | `.bin` / `.hex` | Supported |
 | **7** | **Arduino Nano Family** | 8-bit AVR (ATmega328P, ATmega4809) / ESP32-S3 / nRF52840 | `arduino:avr`, `arduino:megaavr`, `arduino:mbed_nano` | `arduino:avr:nano`, `arduino:megaavr:nanaofresh` | `.hex` / `.bin` | Supported |
 | **8** | **Teensy 4.0 / 4.1** | 600 MHz ARM Cortex-M7 (NXP i.MXRT1062) | `teensy:avr` (Teensyduino Core) | `teensy:avr:teensy40`, `teensy:avr:teensy41` | `.hex` / `.hex` | Planned |
 | **9** | **Adafruit Feather Series** | ARM Cortex-M4 (SAMD51), RP2040, ESP32-S2/S3 | `adafruit:samd`, `rp2040:rp2040`, `esp32:esp32` | `adafruit:samd:adafruit_feather_m4` | `.uf2` / `.bin` | Planned |
@@ -79,7 +79,7 @@ MiniPirate aims to provide a unified, plug-and-play interactive hardware termina
 ### 6. STM32 Nucleo & Blue/Black Pill Series
 - **Microcontrollers:** STM32F103C8T6 (Blue Pill), STM32F401/F411, STM32G431RB, STM32F446RE.
 - **Core Index:** `https://github.com/stm32duino/BoardManagerFiles/raw/main/package_stmicroelectronics_index.json`
-- **FQBNs:** `STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_G431RB`, `STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_F446RE`, `STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_C542RC`
+- **FQBNs:** `STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_G431RB`, `STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_F446RE`, `STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_C562RE`
 - **Key Characteristics:** High pin counts, multiple hardware I2C/SPI/UART peripherals, 12-bit ADCs.
 - **Diagnostics:** Standard STM32 LL macros (`__LL_ADC_CALC_VREFANALOG_VOLTAGE`, `__LL_ADC_CALC_TEMPERATURE`), `mallinfo().fordblks` for free SRAM.
 
@@ -182,7 +182,7 @@ jobs:
           arduino-cli compile --fqbn Seeeduino:renesas_uno:XIAO_RA4M1 examples/Minipirate/Minipirate.ino
           arduino-cli compile --fqbn STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_G431RB examples/Minipirate/Minipirate.ino
           arduino-cli compile --fqbn STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_F446RE examples/Minipirate/Minipirate.ino
-          arduino-cli compile --fqbn STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_C542RC examples/Minipirate/Minipirate.ino
+          arduino-cli compile --fqbn STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_C562RE examples/Minipirate/Minipirate.ino
           arduino-cli compile --fqbn esp32:esp32:esp32 examples/Minipirate/Minipirate.ino
           arduino-cli compile --fqbn esp8266:esp8266:nodemcuv2 examples/Minipirate/Minipirate.ino
 ```
@@ -205,7 +205,7 @@ When a new version tag is created or a GitHub release is published, pre-compiled
 | **Seeed XIAO RA4M1** | `Minipirate.ino.bin` | `Minipirate-xiao_ra4m1.bin` |
 | **STM32 Nucleo G431RB** | `Minipirate.ino.bin` | `Minipirate-nucleo_g431rb.bin` |
 | **STM32 Nucleo F446RE** | `Minipirate.ino.bin` | `Minipirate-nucleo_f446re.bin` |
-| **STM32 Nucleo C542RC** | `Minipirate.ino.bin` | `Minipirate-nucleo_c542rc.bin` |
+| **STM32 Nucleo C562RE** | `Minipirate.ino.bin` | `Minipirate-nucleo_c562re.bin` |
 | **ESP32 DevKit** | `Minipirate.ino.bin` | `Minipirate-esp32.bin` |
 | **ESP8266 NodeMCU** | `Minipirate.ino.bin` | `Minipirate-esp8266.bin` |
 
