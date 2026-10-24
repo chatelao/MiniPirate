@@ -38,4 +38,5 @@ jobs:
           arduino-cli compile --fqbn Seeeduino:renesas_uno:XIAO_RA4M1 examples/Minipirate/Minipirate.ino
           arduino-cli compile --fqbn STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_G431RB examples/Minipirate/Minipirate.ino
           arduino-cli compile --fqbn STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_F446RE examples/Minipirate/Minipirate.ino
+          arduino-cli compile --fqbn STMicroelectronics:stm32:Nucleo_64:pnum=NUCLEO_C542RC examples/Minipirate/Minipirate.ino
           arduino-cli compile --fqbn esp32:esp32:XIAO_ESP32C6 examples/Minipirate/Minipirate.ino
