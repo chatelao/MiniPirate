@@ -2,28 +2,84 @@
 
 [![Arduino Library Build](https://github.com/chatelao/MiniPirate/workflows/Arduino%20Library%20Build/badge.svg)](https://github.com/chatelao/MiniPirate/actions)
 
-**MiniPirate** is a powerful, lightweight, human-readable serial protocol tool and Arduino library for direct hardware interaction and debugging. Inspired heavily by the legendary **Bus Pirate**, it allows you to scan I2C buses, read/write GPIOs, run automated clocks, control servo motors, read/write EEPROM, and monitor micro-controller CPU details (temperature, VCC, free RAM) straight from any serial terminal — **no code writing or compiling required for each new experiment.**
+**MiniPirate** turns any microcontroller into an interactive hardware Swiss Army Knife. Connect via serial terminal and immediately inspect I2C buses, toggle GPIOs, generate clock signals, sweep analog pins, control servos, and read real-time CPU telemetry — **all without writing or compiling a single line of code for each experiment.**
 
-It is an ideal utility for electronics enthusiasts, hardware hackers, and professionals looking to quickly bring up or diagnose new sensors, actuators, and target boards.
+Inspired by the legendary **Bus Pirate**, MiniPirate is the ultimate lightweight utility for hardware hackers, electronics hobbyists, and embedded engineers to bring up new chips, debug sensors, and probe target boards in seconds.
 
 ---
 
-## 🚀 Key Features
+## ✨ Feature Highlights
 
-- **WiFi Network Scanning:** Scan and display visible WiFi networks (SSID, signal strength, channel, and security mode) on supported microcontrollers (e.g. ESP32).
-- **I2C Bus Diagnostics:** Full support for scanning I2C addresses, selecting active devices, and performing non-blocking reads and writes.
-- **Rich GPIO Control:** Instantly change pin directions (INPUT/OUTPUT), toggle states, read analog/digital values, and perform sequential pin sweeps.
-- **Automated Clock Generator:** Generate a clock signal on any pin with custom millisecond-level intervals.
-- **Servo Motor Support:** Directly control servo angles from the CLI.
-- **Persistent State Storage:** Save and restore GPIO configurations (directions, values, clocks) to/from internal EEPROM across power cycles.
-- **Deep MCU Monitoring:** Read on-chip temperature, VCC voltage levels, uptime, and free SRAM (available on supported platforms).
-- **Interactive Help System:** Built-in extended, command-specific help guides (e.g., `h p`, `h g`, `h i`) using minimal SRAM overhead.
+### 🔍 Instant I2C Bus Discovery & Packet Operations
+Scan the entire I2C address space with a single keypress. Lock onto target devices and execute non-blocking multi-byte reads or writes directly from your terminal.
+```text
+> i
+I2C SCAN...
+  FOUND: 0x27 (PCF8574 I/O Expander)
+  FOUND: 0x68 (DS3231 RTC)
+> # 0x27
+ACTIVE I2C ADDRESS: 0x27
+> w 0x00 0xFF
+I2C WRITE 2 BYTES OK
+> r 4
+I2C READ 4 BYTES: 0x12 0x34 0x56 0x78
+```
+
+### ⚡ On-the-Fly GPIO & PWM Manipulation
+Instantly switch pin modes between INPUT and OUTPUT, drive pins HIGH or LOW, read digital or analog levels, and generate variable frequency PWM signals on demand.
+```text
+> > 5        # Set pin 5 to OUTPUT
+> / 5        # Set pin 5 HIGH
+> \ 5        # Set pin 5 LOW
+> g 9 128    # Set pin 9 PWM duty cycle to 50% (128/255)
+> a A0       # Read analog voltage on pin A0
+A0: 512 (2.50V)
+```
+
+### ⏱️ Automated Clock Generator & Servo Controller
+Run millisecond-precision background clock pulses on any GPIO pin or sweep servo motor angles directly without blocking serial interaction.
+```text
+> c 8 100    # Start automated 100ms clock toggle on pin 8
+> s 10 90    # Move servo on pin 10 to 90 degrees
+> c 8        # Stop clock generator on pin 8
+```
+
+### 🌡️ Real-Time On-Chip Telemetry & Diagnostics
+Monitor chip health in real-time, including operational VCC voltage, internal silicon die temperature, uptime, and available SRAM memory.
+```text
+> v          # Read MCU supply voltage
+VCC: 5.01V
+> t          # Read internal CPU temperature
+Temp: 25.40'C
+> f          # Read memory stats
+RAM: 1234 bytes free
+```
+
+### 💾 Non-Volatile EEPROM State Persistence
+Save your complete hardware layout (pin directions, logic output states, active clock configurations) to onboard EEPROM and restore them automatically across power cycles.
+```text
+> x          # Save active configuration to EEPROM
+EEPROM: Pin configurations saved.
+> y          # Load configuration from EEPROM
+EEPROM: Restored pin configuration.
+```
+
+---
+
+## ⚡ Quick Start in 60 Seconds
+
+1. **Plug in your board** via USB.
+2. **Open any Serial Terminal** (Arduino Serial Monitor, PuTTY, TeraTerm, minicom, `screen`, or Web Serial).
+3. **Configure Terminal Settings**:
+   - **Baud Rate:** `57600`
+   - **Line Ending:** Both `NL & CR` (or `LF / CR`)
+4. Type `h` or `?` and press **Enter** to display the interactive help system!
 
 ---
 
 ## 🔌 Supported Boards & Architectures
 
-MiniPirate is designed as a highly cross-platform Arduino library supporting a wide range of architectures:
+MiniPirate runs natively across a broad range of 8-bit AVR, 32-bit ARM Cortex-M, ESP32 RISC-V, and Renesas microcontrollers:
 
 | Platform | Board Variant | FQBN / Core | Flashing Guide |
 |---|---|---|---|
@@ -40,78 +96,63 @@ MiniPirate is designed as a highly cross-platform Arduino library supporting a w
 
 ---
 
-## 🏁 Getting Started
+## 📖 Complete Command Reference
 
-### 1. Hardware Connection & Setup
-1. Flash the MiniPirate firmware to your microcontroller (see the [Installation & Compilation](#-installation--compilation) section below).
-2. Connect the board to your PC via a USB/Serial cable.
-3. Open your favorite Serial Terminal (e.g., Arduino Serial Monitor, PuTTY, TeraTerm, Minicom, screen).
-4. Configure your connection settings:
-   - **Baud Rate:** `57600`
-   - **Line Ending:** Both `NL & CR` or `LF / CR` (newline is used to terminate multi-argument commands).
+Type `h <command>` (e.g. `h p` or `h g`) directly in the terminal for command-specific extended documentation.
 
-### 2. General Usage
-Upon boot, MiniPirate outputs system diagnostic information (detected pin counts, frequency, and help instructions). To show the main help screen, type `h` or `?` and press enter.
+### 🌐 System & Diagnostic Commands
 
-For extended help on any specific command, type `h <command>` (for example, `h p` for ports, or `h g` for PWM).
-
----
-
-## 🛠️ List of Supported Commands
-
-### General Commands
-
-| Command | Description | Output Example |
+| Command | Description | Example / Output |
 |---|---|---|
-| `h` / `?` | Show main help menu | *(Help list)* |
-| `h [cmd]` | Show command-specific extended help | `HELP: Port Status ('p' and 'q') ...` |
-| `v` | Show MCU VCC reading | `VCC: 5.01V` |
-| `t` | Show MCU internal temperature reading | `Temp: 25.40'C`|
-| `f` | Show free RAM, EEPROM & Flash size | `RAM 1234 bytes free` |
-| `u` | Show system uptime | `Uptime: 12.34 seconds` |
-| `e` | Erase EEPROM (filled with zeros) | `Erasing... done` |
-| `*` | Software Reboot | `Rebooting...` |
-| `x` | Save current pin directions, states, and clocks to EEPROM | `Saved state to EEPROM` |
-| `y` | Load and restore configuration from EEPROM | `Loaded state from EEPROM` |
-| `w` | Scan visible WiFi networks (if supported) | `SCANNING WIFI NETWORKS...` |
+| `h` / `?` | Display main interactive help menu | `h` |
+| `h [cmd]` | Show command-specific extended help | `h p` |
+| `v` | Read MCU operational supply voltage (VCC) | `VCC: 5.01V` |
+| `t` | Read MCU internal die temperature sensor | `Temp: 25.40'C` |
+| `f` | Read available free SRAM, EEPROM, and Flash space | `RAM 1234 bytes free` |
+| `u` | Display system uptime since boot | `Uptime: 12.34 seconds` |
+| `e` | Erase internal EEPROM state storage | `Erasing... done` |
+| `*` | Trigger software system reboot | `Rebooting...` |
+| `x` | Save active pin directions, states, and clocks to EEPROM | `Saved state to EEPROM` |
+| `y` | Restore pin states and configurations from EEPROM | `Loaded state from EEPROM` |
+| `w` | Scan visible WiFi networks (supported chips, e.g. ESP32) | `SCANNING WIFI NETWORKS...` |
 
-### Digital GPIO Commands
+### 🔌 Digital GPIO Commands
 
 | Command | Description | Example |
 |---|---|---|
-| `p` | Detailed view of all port directions, states, PWM & Interrupt status | `p` |
-| `q` | Compact matrix view of all ports (quick scan) | `q` |
-| `< [pin]` | Set specified pin as **INPUT** | `< 3` (sets pin 3 to INPUT)|
-| `> [pin]` | Set specified pin as **OUTPUT** | `> 4` (sets pin 4 to OUTPUT) |
-| `/ [pin]` | Set pin value to **HIGH** | `/ 5` (sets pin 5 to HIGH) |
-| `\ [pin]` | Set pin value to **LOW** | `\ 6` (sets pin 6 to LOW) |
-| `^ [pin]` | Pulse pin: LOW -> HIGH -> LOW (single clock) | `^ 7` (sends clock pulse to pin 7) |
-| `$` | Sequential pin sweep (flips pin state for 250ms then restores) | `$` |
-| `c [pin] [ms]`| Start automated clock generator (toggles pin state every `ms`) | `c 8 100` (clocks pin 8 with 100ms interval) |
-| `c [pin]` | Stop automated clock generator on specified pin | `c 8` |
-| `z` | Global Reset: Set all ports to INPUT mode and write LOW | `z` |
+| `p` | Detailed view of port directions, states, PWM & interrupts | `p` |
+| `q` | Compact pin matrix quick scan | `q` |
+| `< [pin]` | Configure pin as **INPUT** | `< 3` |
+| `> [pin]` | Configure pin as **OUTPUT** | `> 4` |
+| `/ [pin]` | Set output pin state **HIGH** | `/ 5` |
+| `\ [pin]` | Set output pin state **LOW** | `\ 6` |
+| `^ [pin]` | Pulse pin: LOW → HIGH → LOW (single pulse) | `^ 7` |
+| `$` | Sequential pin sweep (flips each pin for 250ms and restores) | `$` |
+| `c [pin] [ms]`| Start automated clock generator on `pin` with `ms` interval | `c 8 100` |
+| `c [pin]` | Stop automated clock generator on `pin` | `c 8` |
+| `z` | Global Reset: Set all GPIO pins to INPUT / LOW | `z` |
 
-### Analog & PWM Commands
-
-| Command | Description | Example |
-|---|---|---|
-| `a [pin]` | Read analog value and calculate voltage | `a a0` or `a 0` (reads from analog pin A0) |
-| `aa [ms]` | Start continuous analog readings of all analog pins | `aa 100` (reads all analog inputs every 100ms) |
-| `ar [bits]`| Set ADC reading resolution | `ar 12` (sets ADC resolution to 12 bits) |
-| `ar` | Show current ADC reading resolution | `ar` |
-| `g [pin] [val]`| Set analog / PWM output value (0-255) | `g 9 128` (sets PWM on pin 9 to 50% duty cycle)|
-| `gg [freq]`| Set analog / PWM output frequency in Hz (RP2040/ESP8266) | `gg 1000` (sets PWM frequency to 1000Hz) |
-| `ggg` | Stop all PWM immediately and set outputs to LOW | `ggg` |
-| `s [pin] [deg]`| Set servo position angle (0-180) | `s 10 90` (sets servo on pin 10 to 90 degrees)|
-
-### I2C Commands
+### 🎛️ Analog, PWM & Servo Commands
 
 | Command | Description | Example |
 |---|---|---|
-| `i` | Scan the I2C bus for connected device addresses | `i` |
-| `# [addr]` | Set the specified I2C address as active | `# 0x27` (accepts Hex `0x27`, Bin `0b0100111`, or Dec `39`) |
-| `r [count]` | Read `count` bytes from the active I2C device | `r 10` (reads 10 bytes from active device) |
-| `w [bytes...]`| Write bytes to the active I2C device | `w 0x00 0x12 0xFF` (writes three bytes to active device) |
+| `a [pin]` | Read analog value and calculate voltage | `a A0` or `a 0` |
+| `aa [ms]` | Start continuous sampling of all analog inputs | `aa 100` |
+| `ar [bits]`| Set ADC resolution (e.g. 8, 10, 12 bits) | `ar 12` |
+| `ar` | Show current ADC resolution setting | `ar` |
+| `g [pin] [val]`| Set PWM output duty cycle (0–255) | `g 9 128` |
+| `gg [freq]`| Set PWM base frequency in Hz (RP2040 / ESP8266) | `gg 1000` |
+| `ggg` | Emergency PWM stop: Disable all active PWM channels | `ggg` |
+| `s [pin] [deg]`| Set servo motor position angle (0–180°) | `s 10 90` |
+
+### 🤝 I2C Protocol Commands
+
+| Command | Description | Example |
+|---|---|---|
+| `i` | Scan I2C bus for connected target addresses | `i` |
+| `# [addr]` | Select active target I2C address (Hex, Bin, or Dec) | `# 0x27` or `# 39` |
+| `r [count]` | Read `count` bytes from active I2C device | `r 10` |
+| `w [bytes...]`| Write byte sequence to active I2C device | `w 0x00 0x12 0xFF` |
 
 ---
 
@@ -119,41 +160,39 @@ For extended help on any specific command, type `h <command>` (for example, `h p
 
 ### Requirements
 - **Arduino IDE** (v1.8.x or v2.x) OR **Arduino CLI**
-- Dependencies: `Servo` library (usually built-in or easily installed via Library Manager).
+- Dependencies: `Servo` library (built-in or available via Library Manager).
 
 ### Using Arduino IDE
-1. Download this repository as a `.zip` file or clone it into your `Arduino/libraries/` folder:
+1. Clone or download this repository into your `Arduino/libraries/` folder:
    ```bash
    git clone https://github.com/chatelao/MiniPirate.git
    ```
 2. Open the Arduino IDE.
-3. Navigate to **File** > **Examples** > **SwissHandmade MiniPirate** > **Minipirate**.
-4. Select your target Board (e.g., Arduino Uno, Raspberry Pi Pico, or STM32 Nucleo-64) from **Tools** > **Board**.
-5. Click **Upload** to build and flash.
+3. Open **File** > **Examples** > **SwissHandmade MiniPirate** > **Minipirate**.
+4. Select your board from **Tools** > **Board**.
+5. Click **Upload**.
 
 ### Using Arduino CLI
-Ensure you have the core for your target architecture installed. For example, to compile for Arduino Uno:
-
 ```bash
-# Install AVR core and dependencies
+# Install core & dependencies (e.g. AVR core)
 arduino-cli core install arduino:avr
 arduino-cli lib install Servo
 
-# Compile the sketch
+# Compile sketch
 arduino-cli compile --fqbn arduino:avr:uno examples/Minipirate/Minipirate.ino
 
-# Upload the sketch (replace /dev/ttyACM0 with your board port)
+# Flash board (adjust serial port)
 arduino-cli upload -p /dev/ttyACM0 --fqbn arduino:avr:uno examples/Minipirate/Minipirate.ino
 ```
 
 ---
 
-## 📜 License
+## 🗺️ Roadmap
 
-This project is released under the MIT License. See [LICENSE.txt](LICENSE.txt) for more details.
+Check out [ROADMAP.md](ROADMAP.md) for planned future features, including SPI, UART, 1-Wire protocols, logic analyzer capabilities, and expanded chip support!
 
 ---
 
-## 🗺️ Roadmap
+## 📜 License
 
-Interested in what is coming next? Check out [ROADMAP.md](ROADMAP.md) for planned future features, including SPI, UART, 1-Wire protocols, and logic analyzer capabilities!
+This project is licensed under the MIT License. See [LICENSE.txt](LICENSE.txt) for details.
