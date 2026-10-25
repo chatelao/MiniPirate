@@ -1,6 +1,6 @@
 # MiniPirate OpenOCD Integration & SWD/JTAG Programmer Concept
 
-This document outlines the architecture, hardware adaptation strategies, protocol translation modes, CLI command specifications, and OpenOCD configuration templates required to use MiniPirate as an **ARM Serial Wire Debug (SWD)** and **IEEE 1149.1 JTAG** hardware programmer/debugger.
+This document outlines the architecture, hardware adaptation strategies, protocol translation modes, CLI command specifications, and OpenOCD configuration templates required to use MiniPirate as an **ARM Serial Wire Debug (SWD)** and **IEEE 1149.1 JTAG** hardware programmer/debugger, as planned in [`OPENOCD_ROADMAP.md`](OPENOCD_ROADMAP.md).
 
 ---
 
